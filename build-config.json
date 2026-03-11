@@ -1,0 +1,11 @@
+{
+  "include": [
+    "index.php",
+    "wp-whatsapp-chat.php",
+    "assets",
+    "includes"
+  ],
+  "exclude": [
+    "assets/index.html"
+  ]
+}
