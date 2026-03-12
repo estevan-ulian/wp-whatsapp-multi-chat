@@ -1,7 +1,7 @@
 {
   "include": [
     "index.php",
-    "wp-whatsapp-chat.php",
+    "wp-whatsapp-multi-chat.php",
     "assets",
     "includes"
   ],

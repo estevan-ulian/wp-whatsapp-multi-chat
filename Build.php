@@ -27,7 +27,7 @@ if (!class_exists('WPWhatsAppChatBuilder')) {
           $config = json_decode(file_get_contents('build-config.json'), true);
 
           $plugin_build_dir = "build";
-          $plugin_name = "wp-whatsapp-chat";
+          $plugin_name = "wp-whatsapp-multi-chat";
           $plugin_file_name = "$plugin_name.zip";
 
           if ($fs->exists($plugin_build_dir)) {

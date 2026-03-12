@@ -17,10 +17,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         format: "iife",
-        name: "WP_WhatsApp_Chat_Plugin",
-        assetFileNames: "wp-whatsapp-chat-plugin.css",
-        chunkFileNames: "wp-whatsapp-chat-plugin.js",
-        entryFileNames: "wp-whatsapp-chat-plugin.js",
+        name: "WP_WhatsApp_Multi_Chat_Plugin",
+        assetFileNames: "css/wp-whatsapp-multi-chat-plugin.css",
+        chunkFileNames: "js/wp-whatsapp-multi-chat-plugin.js",
+        entryFileNames: "js/wp-whatsapp-multi-chat-plugin.js",
         inlineDynamicImports: true
       }
     },
