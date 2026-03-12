@@ -12,9 +12,21 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.0.0');
-define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL', plugin_dir_url(__FILE__));
+if (!defined('WP_WHATSAPP_MULTI_CHAT_VERSION')) {
+  define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.0.0');
+}
+
+if (!defined('WP_WHATSAPP_MULTI_CHAT_PLUGIN_FILE')) {
+  define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_FILE', __FILE__);
+}
+
+if (!defined('WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR')) {
+  define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR', plugin_dir_path(__FILE__));
+}
+
+if (!defined('WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL')) {
+  define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL', plugin_dir_url(__FILE__));
+}
 
 class WP_WhatsApp_Multi_Chat_Plugin
 {
@@ -26,11 +38,14 @@ class WP_WhatsApp_Multi_Chat_Plugin
     $this->init_classes();
   }
 
-  private function load_classes() {
+  private function load_classes()
+  {
+    require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-utils.php';
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-accounts.php';
   }
 
-  private function init_classes() {
+  private function init_classes()
+  {
     WP_WhatsApp_Multi_Chat_Accounts::get_instance();
   }
 
