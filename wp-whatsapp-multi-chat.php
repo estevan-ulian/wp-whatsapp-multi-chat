@@ -43,12 +43,14 @@ class WP_WhatsApp_Multi_Chat_Plugin
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-utils.php';
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-accounts.php';
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-options.php';
+    require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-view.php';
   }
 
   private function init_classes()
   {
     WP_WhatsApp_Multi_Chat_Accounts::get_instance();
     WP_WhatsApp_Multi_Chat_Options::get_instance();
+    WP_WhatsApp_Multi_Chat_View::get_instance();
   }
 
   public static function get_instance()
