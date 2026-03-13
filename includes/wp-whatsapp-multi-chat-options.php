@@ -495,6 +495,53 @@ class WP_WhatsApp_Multi_Chat_Options
         </div>
       </div>
 
+      <!-- ── Text / Labels ─────────────────────────────────────────── -->
+      <div class="wpwc-section">
+        <h2 class="wpwc-section-title"><?php esc_html_e('Text / Labels', 'wp-whatsapp-multi-chat'); ?></h2>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('Panel title', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="panel_title" value="<?php echo esc_attr($o['panel_title']); ?>" class="regular-text"
+                   placeholder="<?php esc_attr_e('e.g. WhatsApp', 'wp-whatsapp-multi-chat'); ?>">
+          </div>
+        </div>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('Panel subtitle', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="panel_subtitle" value="<?php echo esc_attr($o['panel_subtitle']); ?>" class="regular-text"
+                   placeholder="<?php esc_attr_e('e.g. Typically replies within minutes', 'wp-whatsapp-multi-chat'); ?>">
+          </div>
+        </div>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('Contact CTA', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="cta_text" value="<?php echo esc_attr($o['cta_text']); ?>" class="regular-text"
+                   placeholder="<?php esc_attr_e('e.g. Chat', 'wp-whatsapp-multi-chat'); ?>">
+            <p class="description"><?php esc_html_e('Label shown next to the arrow on each contact row.', 'wp-whatsapp-multi-chat'); ?></p>
+          </div>
+        </div>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('No contacts message', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="empty_text" value="<?php echo esc_attr($o['empty_text']); ?>" class="regular-text"
+                   placeholder="<?php esc_attr_e('e.g. No contacts available.', 'wp-whatsapp-multi-chat'); ?>">
+          </div>
+        </div>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('Footer text', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="footer_text" value="<?php echo esc_attr($o['footer_text']); ?>" class="regular-text"
+                   placeholder="<?php esc_attr_e('e.g. End-to-end encrypted', 'wp-whatsapp-multi-chat'); ?>">
+            <p class="description"><?php esc_html_e('Leave empty to hide the footer.', 'wp-whatsapp-multi-chat'); ?></p>
+          </div>
+        </div>
+      </div>
+
       <?php submit_button(__('Save Settings', 'wp-whatsapp-multi-chat')); ?>
     </form>
     <?php
@@ -536,6 +583,11 @@ class WP_WhatsApp_Multi_Chat_Options
       'appear_delay'    => min(10, max(0, (float) (isset($_POST['appear_delay']) ? wp_unslash($_POST['appear_delay']) : 0))),
       'hide_mobile'     => isset($_POST['hide_mobile'])  ? 1 : 0,
       'hide_desktop'    => isset($_POST['hide_desktop']) ? 1 : 0,
+      'panel_title'     => sanitize_text_field(wp_unslash(isset($_POST['panel_title'])   ? $_POST['panel_title']   : '')),
+      'panel_subtitle'  => sanitize_text_field(wp_unslash(isset($_POST['panel_subtitle']) ? $_POST['panel_subtitle'] : '')),
+      'cta_text'        => sanitize_text_field(wp_unslash(isset($_POST['cta_text'])      ? $_POST['cta_text']      : '')),
+      'empty_text'      => sanitize_text_field(wp_unslash(isset($_POST['empty_text'])    ? $_POST['empty_text']    : '')),
+      'footer_text'     => sanitize_text_field(wp_unslash(isset($_POST['footer_text'])   ? $_POST['footer_text']   : '')),
     );
 
     update_option(self::APPEARANCE_OPTION_KEY, $options);
@@ -565,6 +617,11 @@ class WP_WhatsApp_Multi_Chat_Options
       'appear_delay'    => 0,
       'hide_mobile'     => 0,
       'hide_desktop'    => 0,
+      'panel_title'     => __('WhatsApp', 'wp-whatsapp-multi-chat'),
+      'panel_subtitle'  => __('Typically replies within minutes', 'wp-whatsapp-multi-chat'),
+      'cta_text'        => __('Chat', 'wp-whatsapp-multi-chat'),
+      'empty_text'      => __('No contacts available.', 'wp-whatsapp-multi-chat'),
+      'footer_text'     => __('End-to-end encrypted', 'wp-whatsapp-multi-chat'),
     );
   }
 
