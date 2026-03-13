@@ -24,6 +24,6 @@ export default defineConfig({
         inlineDynamicImports: true
       }
     },
-    outDir: path.resolve(__dirname, "../assets")
+    outDir: path.resolve(__dirname, "../assets/frontend")
   }
 })

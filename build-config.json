@@ -6,6 +6,6 @@
     "includes"
   ],
   "exclude": [
-    "assets/index.html"
+    "assets/frontend/index.html"
   ]
 }
