@@ -1,25 +1,342 @@
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* -----------------------------------------------
+   WhatsApp Multi Chat – Frontend Widget
+----------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.wpwc-widget {
+  position: fixed;
+  z-index: 999999;
+  display: flex;
+  gap: 10px;
+}
+
+/* Device visibility */
+@media (max-width: 768px) {
+  .wpwc-hide-mobile  { display: none !important; }
+}
+@media (min-width: 769px) {
+  .wpwc-hide-desktop { display: none !important; }
+}
+
+/* -----------------------------------------------
+   Button
+----------------------------------------------- */
+.wpwc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, .20),
+    0 1px 3px  rgba(0, 0, 0, .12);
+  transition: transform 160ms cubic-bezier(.4,0,.2,1), box-shadow 160ms;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.wpwc-btn:focus-visible {
+  outline: 3px solid rgba(255,255,255,.6);
+  outline-offset: 2px;
+}
+.wpwc-btn:hover  { transform: scale(1.08); box-shadow: 0 8px 24px rgba(0,0,0,.26), 0 2px 6px rgba(0,0,0,.14); }
+.wpwc-btn:active { transform: scale(0.94); }
+
+/* Sizes – circular */
+.wpwc-btn--small  { width: 44px; height: 44px; border-radius: 50%; }
+.wpwc-btn--medium { width: 56px; height: 56px; border-radius: 50%; }
+.wpwc-btn--large  { width: 68px; height: 68px; border-radius: 50%; }
+
+/* Pill (icon + text) */
+.wpwc-btn--pill { border-radius: 100px; width: auto; }
+.wpwc-btn--pill.wpwc-btn--small  { height: 44px; padding: 0 20px 0 14px; }
+.wpwc-btn--pill.wpwc-btn--medium { height: 56px; padding: 0 24px 0 18px; }
+.wpwc-btn--pill.wpwc-btn--large  { height: 68px; padding: 0 28px 0 20px; }
+
+.wpwc-btn-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+/* icon container — display:flex kept for alignment */
+.wpwc-btn-icon {
+  display: flex;
+}
+
+/* -----------------------------------------------
+   Animations
+----------------------------------------------- */
+
+/* Pulse ring */
+.wpwc-btn--pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: wpwc-pulse 2.2s ease-out infinite;
+  z-index: -1;
+}
+
+@keyframes wpwc-pulse {
+  0%   { transform: scale(1);    opacity: .75; }
+  70%  { transform: scale(1.7);  opacity: 0;   }
+  100% { opacity: 0; }
+}
+
+/* Bounce */
+.wpwc-btn--bounce { animation: wpwc-bounce 2.6s ease infinite; }
+.wpwc-btn--bounce:hover { animation: none; }
+
+@keyframes wpwc-bounce {
+  0%, 100% { transform: translateY(0); }
+  18%       { transform: translateY(-10px); }
+  36%       { transform: translateY(0); }
+  54%       { transform: translateY(-5px); }
+  72%       { transform: translateY(0); }
+}
+
+/* -----------------------------------------------
+   Tooltip
+----------------------------------------------- */
+.wpwc-tooltip {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 12px);
+  transform: translateY(-50%);
+  background: #1d2327;
+  color: #fff;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  white-space: nowrap;
+  padding: 6px 11px;
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+
+.wpwc-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-top: -5px;
+  border: 5px solid transparent;
+  border-left-color: #1d2327;
+}
+
+/* -----------------------------------------------
+   Contacts Panel
+----------------------------------------------- */
+.wpwc-panel {
+  width: 320px;
+  position: relative;
+}
+
+/* Inner wrapper carries the visual box (overflow:hidden clips children to border-radius) */
+.wpwc-panel-inner {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, .15),
+    0  2px  8px rgba(0, 0, 0, .08);
+  overflow: hidden;
+}
+
+/* -----------------------------------------------
+   Caret arrow pointing toward the button
+----------------------------------------------- */
+.wpwc-panel::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  pointer-events: none;
+}
+
+/* Bottom corners: panel is above → arrow points DOWN */
+.wpwc-panel[data-corner^="bottom"]::after {
+  top: 100%;
+  margin-top: -1px;
+  border-top: 10px solid #fff;
+  filter: drop-shadow(0 3px 2px rgba(0,0,0,.06));
+}
+.wpwc-panel[data-corner="bottom-right"]::after { right: 27px; }
+.wpwc-panel[data-corner="bottom-left"]::after  { left:  27px; }
+/* push panel 8px away from the button (column-reverse: margin-bottom = gap toward button) */
+.wpwc-panel[data-corner^="bottom"] { margin-bottom: 8px; }
+
+/* Top corners: panel is below → arrow points UP */
+.wpwc-panel[data-corner^="top"]::after {
+  bottom: 100%;
+  margin-bottom: -1px;
+  border-bottom: 10px solid #fff;
+  filter: drop-shadow(0 -3px 2px rgba(0,0,0,.06));
+}
+.wpwc-panel[data-corner="top-right"]::after { right: 27px; }
+.wpwc-panel[data-corner="top-left"]::after  { left:  27px; }
+.wpwc-panel[data-corner^="top"] { margin-top: 8px; }
+
+/* Panel – header */
+.wpwc-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.wpwc-panel-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wpwc-panel-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.wpwc-panel-header-text strong {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+
+.wpwc-panel-header-text span {
+  font-size: 12px;
+  opacity: .82;
+  line-height: 1.3;
+}
+
+/* Panel – body */
+.wpwc-panel-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contact row */
+.wpwc-contact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  text-decoration: none;
+  color: #1d2327;
+  border-bottom: 1px solid #f0f0f1;
+  transition: background 110ms;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: relative;
+}
+
+.wpwc-contact:last-child { border-bottom: none; }
+.wpwc-contact:hover      { background: #f8faf8; }
+.wpwc-contact:hover .wpwc-contact-cta {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.wpwc-contact-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Online dot */
+.wpwc-contact-avatar-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4ade80;
+  border: 2px solid #fff;
+}
+
+.wpwc-contact-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.wpwc-contact-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2327;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wpwc-contact-subtitle {
+  font-size: 12px;
+  color: #787c82;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wpwc-contact-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #25d366;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 150ms, transform 150ms;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Panel – empty state */
+.wpwc-panel-empty {
+  padding: 20px 18px;
+  margin: 0;
+  font-size: 13px;
+  color: #787c82;
   text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.preact:hover {
-  filter: drop-shadow(0 0 2em #673ab8aa);
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+/* Panel – footer */
+.wpwc-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 18px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #b0b5bb;
+  border-top: 1px solid #f0f0f1;
+  background: #fafafa;
 }
