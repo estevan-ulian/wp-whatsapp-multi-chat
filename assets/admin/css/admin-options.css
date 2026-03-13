@@ -162,3 +162,279 @@
 .wpwc-remove-item:hover {
   color: #b32d2e;
 }
+
+/* -----------------------------------------------
+   Sections
+----------------------------------------------- */
+.wpwc-section {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  padding: 20px 24px;
+  margin-top: 20px;
+  max-width: 760px;
+}
+
+.wpwc-section-exceptions {
+  border-color: #f0b849;
+  background: #fffdf0;
+}
+
+.wpwc-section-title {
+  margin: 0 0 16px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2327;
+  border-bottom: 1px solid #f0f0f1;
+  padding-bottom: 10px;
+}
+
+.wpwc-section-description {
+  margin: -8px 0 16px;
+  color: #646970;
+  font-size: 13px;
+}
+
+/* -----------------------------------------------
+   Radio group
+----------------------------------------------- */
+.wpwc-radio-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.wpwc-radio-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 16px;
+  border: 2px solid #dcdcde;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+  background: #f9f9f9;
+}
+
+.wpwc-radio-label:has(input:checked) {
+  border-color: #2271b1;
+  background: #f0f6fc;
+}
+
+.wpwc-radio-label input[type="radio"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.wpwc-radio-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #1d2327;
+}
+
+.wpwc-radio-desc {
+  font-weight: 400;
+  font-size: 12px;
+  color: #646970;
+}
+
+/* -----------------------------------------------
+   Manual conditions (collapsible)
+----------------------------------------------- */
+.wpwc-manual-conditions {
+  overflow: hidden;
+  max-height: 2000px;
+  transition: max-height 280ms ease, opacity 200ms ease;
+  opacity: 1;
+}
+
+.wpwc-manual-conditions.is-hidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* -----------------------------------------------
+   Condition rows
+----------------------------------------------- */
+.wpwc-condition-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px 20px;
+  align-items: start;
+  padding: 14px 0;
+  border-top: 1px solid #f0f0f1;
+}
+
+.wpwc-condition-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3c434a;
+  padding-top: 2px;
+}
+
+/* -----------------------------------------------
+   Appearance – corner picker
+----------------------------------------------- */
+.wpwc-corner-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  width: 220px;
+  aspect-ratio: 1;
+  background: #f0f0f1;
+  border: 1px solid #c3c4c7;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.wpwc-corner-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #dcdcde;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #646970;
+  transition: border-color 100ms, background 100ms;
+  text-align: center;
+  padding: 4px;
+}
+
+.wpwc-corner-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.wpwc-corner-option:has(input:checked) {
+  border-color: #2271b1;
+  background: #f0f6fc;
+  color: #2271b1;
+  font-weight: 600;
+}
+
+.wpwc-corner-option.top-left     { grid-column: 1; grid-row: 1; border-radius: 8px 4px 4px 4px; }
+.wpwc-corner-option.top-right    { grid-column: 2; grid-row: 1; border-radius: 4px 8px 4px 4px; }
+.wpwc-corner-option.bottom-left  { grid-column: 1; grid-row: 2; border-radius: 4px 4px 4px 8px; }
+.wpwc-corner-option.bottom-right { grid-column: 2; grid-row: 2; border-radius: 4px 4px 8px 4px; }
+
+/* -----------------------------------------------
+   Appearance – offset / inline rows
+----------------------------------------------- */
+.wpwc-offset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.wpwc-inline-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #646970;
+  font-weight: 600;
+}
+
+.wpwc-number-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #3c434a;
+}
+
+/* -----------------------------------------------
+   Appearance – size selector
+----------------------------------------------- */
+.wpwc-style-group {
+  margin-bottom: 0;
+}
+
+.wpwc-size-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wpwc-size-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 2px solid #dcdcde;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 100ms, background 100ms;
+  background: #f9f9f9;
+}
+
+.wpwc-size-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.wpwc-size-option:has(input:checked) {
+  border-color: #2271b1;
+  background: #f0f6fc;
+  color: #2271b1;
+  font-weight: 600;
+}
+
+/* -----------------------------------------------
+   Appearance – colour row
+----------------------------------------------- */
+.wpwc-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wpwc-color-input {
+  width: 40px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+.wpwc-color-hex {
+  font-family: monospace;
+  text-transform: uppercase;
+}
+
+/* -----------------------------------------------
+   Appearance – button-text row toggle
+----------------------------------------------- */
+.wpwc-button-text-row {
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 250ms ease, opacity 200ms ease;
+  opacity: 1;
+}
+
+.wpwc-button-text-row.is-hidden {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0;
+  border: none;
+}

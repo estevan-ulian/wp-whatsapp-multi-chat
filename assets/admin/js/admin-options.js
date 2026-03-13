@@ -124,6 +124,38 @@
     $('.wpwc-post-selector').each(function () {
       initPostSelector(this);
     });
+
+    /* display mode radio toggle */
+    $(document).on('change', 'input[name="display_mode"]', function () {
+      var $manual = $('.wpwc-manual-conditions');
+      if ($(this).val() === 'everywhere') {
+        $manual.addClass('is-hidden');
+      } else {
+        $manual.removeClass('is-hidden');
+      }
+    });
+
+    /* button style toggle: show/hide button-text row */
+    $(document).on('change', 'input[name="button_style"]', function () {
+      var $row = $('.wpwc-button-text-row');
+      if ($(this).val() === 'icon-only') {
+        $row.addClass('is-hidden');
+      } else {
+        $row.removeClass('is-hidden');
+      }
+    });
+
+    /* colour picker <-> hex text sync */
+    $(document).on('input', '.wpwc-color-input', function () {
+      $(this).siblings('.wpwc-color-hex').val($(this).val().toUpperCase());
+    });
+
+    $(document).on('input', '.wpwc-color-hex', function () {
+      var val = $(this).val();
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        $(this).siblings('.wpwc-color-input').val(val);
+      }
+    });
   });
 
 })(jQuery);
