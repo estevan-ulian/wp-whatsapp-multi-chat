@@ -50,7 +50,7 @@ function iconSize(size: string): number {
 /* ------------------------------------------------------------------
    ContactItem
 ------------------------------------------------------------------ */
-function ContactItem({ name, number, predefined_message, index }: Account & { index: number }) {
+function ContactItem({ name, number, predefined_message, thumbnail, index }: Account & { index: number }) {
   const { appearance } = appConfig;
   const displayName = name || number;
   const letterInitial = displayName.charAt(0).toUpperCase();
@@ -71,9 +71,12 @@ function ContactItem({ name, number, predefined_message, index }: Account & { in
     >
       <span
         class="wpwc-contact-avatar"
-        style={{ background: appearance.color_bg, color: appearance.color_fg }}
+        style={thumbnail ? {} : { background: appearance.color_bg, color: appearance.color_fg }}
       >
-        {letterInitial}
+        {thumbnail
+          ? <img src={thumbnail} alt={displayName} class="wpwc-contact-avatar-img" />
+          : letterInitial
+        }
         <span class="wpwc-contact-avatar-dot" />
       </span>
       <span class="wpwc-contact-info">

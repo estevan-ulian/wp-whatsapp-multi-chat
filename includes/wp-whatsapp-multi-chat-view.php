@@ -181,11 +181,13 @@ class WP_WhatsApp_Multi_Chat_View
 
     $accounts = array();
     foreach ($posts as $post) {
+      $thumbnail_url = get_the_post_thumbnail_url($post->ID, 'thumbnail');
       $accounts[] = array(
         'id'                 => $post->ID,
         'name'               => (string) get_post_meta($post->ID, '_wpwc_name', true),
         'number'             => (string) get_post_meta($post->ID, '_wpwc_number', true),
         'predefined_message' => (string) get_post_meta($post->ID, '_wpwc_predefined_message', true),
+        'thumbnail'          => $thumbnail_url ? (string) $thumbnail_url : '',
       );
     }
 
