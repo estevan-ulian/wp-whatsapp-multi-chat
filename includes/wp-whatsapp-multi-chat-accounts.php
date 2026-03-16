@@ -17,6 +17,22 @@ class WP_WhatsApp_Multi_Chat_Accounts
 
     add_action('add_meta_boxes', array($this, 'account_meta_boxes'));
     add_action('save_post_' . self::POST_TYPE_SLUG, array($this, 'save_account_meta'));
+    add_action('admin_enqueue_scripts', array($this, 'enqueue_account_styles'));
+  }
+
+  public function enqueue_account_styles($hook)
+  {
+    if (!in_array($hook, array('post.php', 'post-new.php'), true)) return;
+
+    $screen = get_current_screen();
+    if (!$screen || $screen->post_type !== self::POST_TYPE_SLUG) return;
+
+    wp_enqueue_style(
+      'wpwc-admin-account',
+      WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/admin/css/admin-account.css',
+      array(),
+      WP_WHATSAPP_MULTI_CHAT_VERSION
+    );
   }
 
   public function register_account_post_type()
@@ -68,25 +84,27 @@ class WP_WhatsApp_Multi_Chat_Accounts
 
   public function render_account_meta_box($post)
   {
+    wp_nonce_field('wpwc_save_account_' . $post->ID, 'wpwc_account_nonce');
+
     $name = get_post_meta($post->ID, '_wpwc_name', true);
     $number = get_post_meta($post->ID, '_wpwc_number', true);
     $predefined_message = get_post_meta($post->ID, '_wpwc_predefined_message', true);
 ?>
-    <div style="margin-bottom: 15px;">
-      <label for="wpwc_name" style="display: block; margin-bottom: 5px; font-weight: bold;"><?php esc_html_e('Name', 'wp-whatsapp-multi-chat'); ?></label>
-      <input type="text" id="wpwc_name" name="wpwc_name" value="<?php echo esc_attr($name); ?>" placeholder="<?php esc_attr_e('e.g., Support', 'wp-whatsapp-multi-chat'); ?>" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <div class="wpwc-meta-field">
+      <label for="wpwc_name" class="wpwc-meta-label"><?php esc_html_e('Name', 'wp-whatsapp-multi-chat'); ?></label>
+      <input type="text" id="wpwc_name" name="wpwc_name" value="<?php echo esc_attr($name); ?>" placeholder="<?php esc_attr_e('e.g., Support', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
     </div>
 
-    <div style="margin-bottom: 15px;">
-      <label for="wpwc_number" style="display: block; margin-bottom: 5px; font-weight: bold;"><?php esc_html_e('Phone Number', 'wp-whatsapp-multi-chat'); ?></label>
-      <input type="text" id="wpwc_number" name="wpwc_number" value="<?php echo esc_attr($number); ?>" placeholder="<?php esc_attr_e('e.g., 5511912341234', 'wp-whatsapp-multi-chat'); ?>" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-      <small style="color: #666;"><?php esc_html_e('Include country code and area code', 'wp-whatsapp-multi-chat'); ?></small>
+    <div class="wpwc-meta-field">
+      <label for="wpwc_number" class="wpwc-meta-label"><?php esc_html_e('Phone Number', 'wp-whatsapp-multi-chat'); ?></label>
+      <input type="text" id="wpwc_number" name="wpwc_number" value="<?php echo esc_attr($number); ?>" placeholder="<?php esc_attr_e('e.g., 5511912341234', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
+      <small class="wpwc-meta-hint"><?php esc_html_e('Include country code and area code', 'wp-whatsapp-multi-chat'); ?></small>
     </div>
 
-    <div style="margin-bottom: 15px;">
-      <label for="wpwc_predefined_message" style="display: block; margin-bottom: 5px; font-weight: bold;"><?php esc_html_e('Predefined Message', 'wp-whatsapp-multi-chat'); ?></label>
-      <textarea id="wpwc_predefined_message" name="wpwc_predefined_message" rows="4" placeholder="<?php esc_attr_e('e.g., Hello, I came through the website and would like a quote.', 'wp-whatsapp-multi-chat'); ?>" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;"><?php echo esc_textarea($predefined_message); ?></textarea>
-      <small style="color: #666;"><?php esc_html_e('This message will be pre-filled in the WhatsApp chat', 'wp-whatsapp-multi-chat'); ?></small>
+    <div class="wpwc-meta-field">
+      <label for="wpwc_predefined_message" class="wpwc-meta-label"><?php esc_html_e('Predefined Message', 'wp-whatsapp-multi-chat'); ?></label>
+      <textarea id="wpwc_predefined_message" name="wpwc_predefined_message" rows="4" placeholder="<?php esc_attr_e('e.g., Hello, I came through the website and would like a quote.', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-textarea"><?php echo esc_textarea($predefined_message); ?></textarea>
+      <small class="wpwc-meta-hint"><?php esc_html_e('This message will be pre-filled in the WhatsApp chat', 'wp-whatsapp-multi-chat'); ?></small>
     </div>
 <?php
   }
@@ -96,26 +114,31 @@ class WP_WhatsApp_Multi_Chat_Accounts
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $post_id)) return;
 
+    if (!isset($_POST['wpwc_account_nonce']) ||
+        !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wpwc_account_nonce'])), 'wpwc_save_account_' . $post_id)) {
+      return;
+    }
+
     if (isset($_POST['wpwc_name'])) {
-      update_post_meta($post_id, '_wpwc_name', sanitize_text_field($_POST['wpwc_name']));
+      update_post_meta($post_id, '_wpwc_name', sanitize_text_field(wp_unslash($_POST['wpwc_name'])));
     }
 
     if (isset($_POST['wpwc_number'])) {
-      update_post_meta($post_id, '_wpwc_number', sanitize_text_field($_POST['wpwc_number']));
+      $number = WP_WhatsApp_Multi_Chat_Utils::sanitize_phone_number(wp_unslash($_POST['wpwc_number']));
+      update_post_meta($post_id, '_wpwc_number', $number);
     }
 
     if (isset($_POST['wpwc_predefined_message'])) {
-      update_post_meta($post_id, '_wpwc_predefined_message', sanitize_textarea_field($_POST['wpwc_predefined_message']));
+      update_post_meta($post_id, '_wpwc_predefined_message', sanitize_textarea_field(wp_unslash($_POST['wpwc_predefined_message'])));
     }
   }
 
   public function account_tabulation_header($defaults)
   {
     unset($defaults['date']);
-    $defaults['title'] = esc_html(__('Name', 'wp-whatsapp-multi-chat'));
-    $defaults['picture'] = esc_html(__('Picture', 'wp-whatsapp-multi-chat'));
-    $defaults['picture']  = esc_html__('Picture', 'wptwa');
-    $defaults['number']  = esc_html__('Number', 'wptwa');
+    $defaults['title']   = esc_html__('Name', 'wp-whatsapp-multi-chat');
+    $defaults['picture'] = esc_html__('Picture', 'wp-whatsapp-multi-chat');
+    $defaults['number']  = esc_html__('Number', 'wp-whatsapp-multi-chat');
     return $defaults;
   }
 
@@ -123,8 +146,13 @@ class WP_WhatsApp_Multi_Chat_Accounts
   {
     if ($column_name === 'picture') {
       if (has_post_thumbnail($post_id)) {
-        echo '<img src="' . get_the_post_thumbnail_url($post_id, 'thumbnail') . '" alt="' . get_the_title($post_id) . '" style="width: 40px; height: 50px; object-fit: cover;">';
+        echo '<img src="' . esc_url(get_the_post_thumbnail_url($post_id, 'thumbnail'))
+           . '" alt="' . esc_attr(get_the_title($post_id))
+           . '" style="width: 40px; height: 50px; object-fit: cover;">';
       }
+    }
+    if ($column_name === 'number') {
+      echo esc_html(get_post_meta($post_id, '_wpwc_number', true));
     }
   }
 

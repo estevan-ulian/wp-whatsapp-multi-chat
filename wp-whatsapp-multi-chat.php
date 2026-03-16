@@ -8,6 +8,8 @@
  * Author URI: https://github.com/estevan-ulian
  * Plugin URI: https://github.com/estevan-ulian/wp-whatsapp-multi-chat
  * Text Domain: wp-whatsapp-multi-chat
+ * Requires at least: 5.0
+ * Requires PHP: 7.2
  */
 
 if (!defined('ABSPATH')) exit;

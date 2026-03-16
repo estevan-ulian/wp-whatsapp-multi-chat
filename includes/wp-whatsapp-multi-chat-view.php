@@ -61,37 +61,7 @@ class WP_WhatsApp_Multi_Chat_View
         'accounts'   => $this->get_accounts(),
         'appearance' => wp_parse_args(
           get_option('wpwc_appearance', array()),
-          array(
-            'position_corner' => 'bottom-right',
-            'offset_x'        => 20,
-            'offset_y'        => 20,
-            'button_style'    => 'icon-only',
-            'button_text'     => __('Chat with us', 'wp-whatsapp-multi-chat'),
-            'button_size'     => 'medium',
-            'color_bg'        => '#25d366',
-            'color_fg'        => '#ffffff',
-            'animation'       => 'none',
-            'tooltip_text'    => '',
-            'appear_delay'    => 0,
-            'hide_mobile'     => 0,
-            'hide_desktop'    => 0,
-            'panel_title'     => __('WhatsApp', 'wp-whatsapp-multi-chat'),
-            'panel_subtitle'  => __('Typically replies within minutes', 'wp-whatsapp-multi-chat'),
-            'cta_text'        => __('Chat', 'wp-whatsapp-multi-chat'),
-            'empty_text'      => __('No contacts available.', 'wp-whatsapp-multi-chat'),
-            'footer_text'     => __('End-to-end encrypted', 'wp-whatsapp-multi-chat'),
-          )
-        ),
-        'conditions' => wp_parse_args(
-          get_option('wpwc_display_conditions', array()),
-          array(
-            'display_mode'    => 'manual',
-            'show_front_page' => 0,
-            'post_types'      => array(),
-            'archives'        => array(),
-            'include_posts'   => array(),
-            'exclude_posts'   => array(),
-          )
+          WP_WhatsApp_Multi_Chat_Options::appearance_defaults()
         ),
       )
     );

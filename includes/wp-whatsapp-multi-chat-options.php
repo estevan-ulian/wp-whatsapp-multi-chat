@@ -601,7 +601,7 @@ class WP_WhatsApp_Multi_Chat_Options
     exit;
   }
 
-  private function appearance_defaults()
+  public static function appearance_defaults()
   {
     return array(
       'position_corner' => 'bottom-right',

@@ -1,0 +1,28 @@
+/* -----------------------------------------------
+   WP WhatsApp Multi Chat – Account Meta Box
+----------------------------------------------- */
+.wpwc-meta-field {
+  margin-bottom: 15px;
+}
+
+.wpwc-meta-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.wpwc-meta-input,
+.wpwc-meta-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.wpwc-meta-textarea {
+  font-family: inherit;
+}
+
+.wpwc-meta-hint {
+  color: #666;
+}
