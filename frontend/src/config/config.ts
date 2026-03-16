@@ -27,21 +27,11 @@ export interface AppearanceSettings {
   footer_text: string;
 }
 
-export interface DisplayConditions {
-  display_mode: 'everywhere' | 'manual';
-  show_front_page: 0 | 1;
-  post_types: string[];
-  archives: string[];
-  include_posts: number[];
-  exclude_posts: number[];
-}
-
 export interface AppParams {
   root: string;
   baseUrl: string;
   accounts: Account[];
   appearance: AppearanceSettings;
-  conditions: DisplayConditions;
 }
 
 declare global {
@@ -58,12 +48,10 @@ const root = document.getElementById(rootId) as HTMLElement;
 const baseUrl = params?.baseUrl || "";
 const accounts = params?.accounts ?? [];
 const appearance = params?.appearance;
-const conditions = params?.conditions;
 
 export const appConfig = Object.freeze({
   root,
   baseUrl,
   accounts,
   appearance,
-  conditions,
 });

@@ -154,6 +154,7 @@ export function App() {
   return (
     <motion.div
       class={widgetClasses}
+      data-h={h}
       style={{ ...widgetStyle, pointerEvents: isVisible ? 'auto' : 'none' }}
       initial={{ opacity: 0, y: isBottom ? 16 : -16 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : (isBottom ? 16 : -16) }}

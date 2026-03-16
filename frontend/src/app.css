@@ -132,6 +132,19 @@
   border-left-color: #1d2327;
 }
 
+/* Tooltip mirrored for left-side corners */
+.wpwc-widget[data-h="left"] .wpwc-tooltip {
+  right: auto;
+  left: calc(100% + 12px);
+}
+
+.wpwc-widget[data-h="left"] .wpwc-tooltip::after {
+  left: auto;
+  right: 100%;
+  border-left-color: transparent;
+  border-right-color: #1d2327;
+}
+
 /* -----------------------------------------------
    Contacts Panel
 ----------------------------------------------- */
