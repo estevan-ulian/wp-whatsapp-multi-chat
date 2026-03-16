@@ -6,13 +6,15 @@
             "email": "estevan.ulian@gmail.com"
         }
     ],
-    "require": {},
     "require-dev": {
         "symfony/filesystem": "^7.3",
         "symfony/finder": "^7.3",
-        "symfony/console": "^7.3"
+        "symfony/console": "^7.3",
+        "phpunit/phpunit": "^13.0",
+        "brain/monkey": "^2.7"
     },
     "scripts": {
-        "build": "php Build.php"
+        "build": "php Build.php",
+        "test": "vendor/bin/phpunit"
     }
 }
