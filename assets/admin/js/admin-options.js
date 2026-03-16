@@ -27,7 +27,7 @@
         .append($('<span/>').addClass('wpwc-type-label').text(type))
         .append(
           $('<button/>')
-            .attr({ type: 'button', 'aria-label': 'Remove' })
+            .attr({ type: 'button', 'aria-label': wpwcOptions.removeLabel })
             .addClass('wpwc-remove-item button-link')
             .html('&times;')
         )

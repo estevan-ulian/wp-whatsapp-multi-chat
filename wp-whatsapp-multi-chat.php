@@ -36,8 +36,18 @@ class WP_WhatsApp_Multi_Chat_Plugin
 
   protected function __construct()
   {
+    add_action('plugins_loaded', array($this, 'load_textdomain'));
     $this->load_classes();
     $this->init_classes();
+  }
+
+  public function load_textdomain()
+  {
+    load_plugin_textdomain(
+      'wp-whatsapp-multi-chat',
+      false,
+      dirname(plugin_basename(__FILE__)) . '/languages'
+    );
   }
 
   private function load_classes()

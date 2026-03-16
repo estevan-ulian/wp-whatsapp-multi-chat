@@ -54,9 +54,10 @@ class WP_WhatsApp_Multi_Chat_Options
     );
 
     wp_localize_script('wpwc-admin-options', 'wpwcOptions', array(
-      'ajaxUrl'     => admin_url('admin-ajax.php'),
-      'nonce'       => wp_create_nonce('wpwc_search_posts'),
-      'noResults'   => __('No results found', 'wp-whatsapp-multi-chat'),
+      'ajaxUrl'       => admin_url('admin-ajax.php'),
+      'nonce'         => wp_create_nonce('wpwc_search_posts'),
+      'noResults'     => __('No results found', 'wp-whatsapp-multi-chat'),
+      'removeLabel'   => __('Remove', 'wp-whatsapp-multi-chat'),
     ));
   }
 
@@ -631,6 +632,8 @@ class WP_WhatsApp_Multi_Chat_Options
       'cta_text'        => __('Chat', 'wp-whatsapp-multi-chat'),
       'empty_text'      => __('No contacts available.', 'wp-whatsapp-multi-chat'),
       'footer_text'     => __('End-to-end encrypted', 'wp-whatsapp-multi-chat'),
+      'aria_open'       => __('Open WhatsApp chat', 'wp-whatsapp-multi-chat'),
+      'aria_panel'      => __('WhatsApp contacts', 'wp-whatsapp-multi-chat'),
     );
   }
 
