@@ -8,6 +8,7 @@ class WP_WhatsApp_Multi_Chat_Options
 
   const OPTION_KEY            = 'wpwc_display_conditions';
   const APPEARANCE_OPTION_KEY = 'wpwc_appearance';
+  const MISC_OPTION_KEY       = 'wpwc_misc';
 
   protected $page_hook = '';
 
@@ -18,6 +19,7 @@ class WP_WhatsApp_Multi_Chat_Options
     add_action('wp_ajax_wpwc_search_posts', array($this, 'ajax_search_posts'));
     add_action('admin_post_wpwc_save_display_conditions', array($this, 'save_display_conditions'));
     add_action('admin_post_wpwc_save_appearance', array($this, 'save_appearance'));
+    add_action('admin_post_wpwc_save_misc', array($this, 'save_misc'));
   }
 
   public function add_options_page()
@@ -114,6 +116,10 @@ class WP_WhatsApp_Multi_Chat_Options
            class="nav-tab <?php echo 'appearance' === $active_tab ? 'nav-tab-active' : ''; ?>">
           <?php esc_html_e('Appearance', 'wp-whatsapp-multi-chat'); ?>
         </a>
+        <a href="<?php echo esc_url(add_query_arg('tab', 'misc', $base_url)); ?>"
+           class="nav-tab <?php echo 'misc' === $active_tab ? 'nav-tab-active' : ''; ?>">
+          <?php esc_html_e('Miscellaneous', 'wp-whatsapp-multi-chat'); ?>
+        </a>
       </nav>
 
       <div class="tab-content">
@@ -124,6 +130,9 @@ class WP_WhatsApp_Multi_Chat_Options
             break;
           case 'appearance':
             $this->tab_appearance();
+            break;
+          case 'misc':
+            $this->tab_misc();
             break;
         }
         ?>
@@ -623,6 +632,63 @@ class WP_WhatsApp_Multi_Chat_Options
       'empty_text'      => __('No contacts available.', 'wp-whatsapp-multi-chat'),
       'footer_text'     => __('End-to-end encrypted', 'wp-whatsapp-multi-chat'),
     );
+  }
+
+  public function tab_misc()
+  {
+    $saved           = get_option(self::MISC_OPTION_KEY, array());
+    $delete_on_uninstall = !empty($saved['delete_on_uninstall']);
+
+    $form_action = admin_url('admin-post.php');
+    ?>
+    <form method="post" action="<?php echo esc_url($form_action); ?>">
+      <?php wp_nonce_field('wpwc_save_misc', 'wpwc_misc_nonce'); ?>
+      <input type="hidden" name="action" value="wpwc_save_misc">
+
+      <!-- ── Uninstall ───────────────────────────────────────────── -->
+      <div class="wpwc-section">
+        <h2 class="wpwc-section-title"><?php esc_html_e('Uninstall', 'wp-whatsapp-multi-chat'); ?></h2>
+
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php esc_html_e('Remove data on uninstall', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-control">
+            <label class="wpwc-checkbox-label">
+              <input type="checkbox" name="delete_on_uninstall" value="1" <?php checked($delete_on_uninstall); ?>>
+              <?php esc_html_e('Delete all plugin settings and data when the plugin is uninstalled.', 'wp-whatsapp-multi-chat'); ?>
+            </label>
+            <p class="description">
+              <?php esc_html_e('When checked, all options and WhatsApp contact records created by this plugin will be permanently removed upon uninstallation. This action cannot be undone.', 'wp-whatsapp-multi-chat'); ?>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <?php submit_button(__('Save Settings', 'wp-whatsapp-multi-chat')); ?>
+    </form>
+    <?php
+  }
+
+  public function save_misc()
+  {
+    check_admin_referer('wpwc_save_misc', 'wpwc_misc_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have sufficient permissions.', 'wp-whatsapp-multi-chat'));
+    }
+
+    $options = array(
+      'delete_on_uninstall' => isset($_POST['delete_on_uninstall']) ? 1 : 0,
+    );
+
+    update_option(self::MISC_OPTION_KEY, $options);
+
+    $redirect = admin_url(
+      'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
+      . '&page=wp-whatsapp-multi-chat-options&tab=misc&updated=1'
+    );
+
+    wp_safe_redirect($redirect);
+    exit;
   }
 
   public function save_display_conditions()

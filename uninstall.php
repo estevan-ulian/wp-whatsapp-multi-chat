@@ -2,8 +2,15 @@
 
 if (!defined('WP_UNINSTALL_PLUGIN')) exit;
 
+$misc = get_option('wpwc_misc', array());
+
+if (empty($misc['delete_on_uninstall'])) {
+  return;
+}
+
 delete_option('wpwc_display_conditions');
 delete_option('wpwc_appearance');
+delete_option('wpwc_misc');
 
 $posts = get_posts(array(
   'post_type'   => 'wpwc_account',

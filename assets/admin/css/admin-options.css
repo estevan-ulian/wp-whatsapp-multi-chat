@@ -273,6 +273,10 @@
   border-top: 1px solid #f0f0f1;
 }
 
+.wpwc-section-title + .wpwc-condition-row {
+  border-top: none;
+}
+
 .wpwc-condition-label {
   font-size: 13px;
   font-weight: 600;
