@@ -602,6 +602,18 @@ class WP_WhatsApp_Multi_Chat_Options
 
     update_option(self::APPEARANCE_OPTION_KEY, $options);
 
+    // Register translatable text strings with WPML String Translation.
+    $context     = 'wp-whatsapp-multi-chat';
+    $text_fields = array(
+      'button_text', 'tooltip_text', 'panel_title', 'panel_subtitle',
+      'cta_text', 'empty_text', 'footer_text',
+    );
+    foreach ($text_fields as $field) {
+      if (!empty($options[$field])) {
+        do_action('wpml_register_single_string', $context, 'appearance_' . $field, $options[$field]);
+      }
+    }
+
     $redirect = admin_url(
       'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
       . '&page=wp-whatsapp-multi-chat-options&tab=appearance&updated=1'

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wpml-config>
+
+    <!--
+        Custom post type: wpwc_account
+        translate="1" makes each account translatable via WPML's Translation Management.
+    -->
+    <custom-types>
+        <custom-type translate="1">wpwc_account</custom-type>
+    </custom-types>
+
+    <!--
+        Custom fields displayed in the WPML Advanced Translation Editor.
+
+        action="translate" → field gets its own value per language.
+        action="copy"      → value is copied from the original and shared across languages.
+    -->
+    <custom-fields>
+        <!-- Agent name may differ per language (e.g. localised department name) -->
+        <custom-field action="translate">_wpwc_name</custom-field>
+
+        <!-- Phone number is typically the same across languages; copy to all translations -->
+        <custom-field action="copy">_wpwc_number</custom-field>
+
+        <!-- Pre-filled WhatsApp message should be translated -->
+        <custom-field action="translate">_wpwc_predefined_message</custom-field>
+    </custom-fields>
+
+</wpml-config>

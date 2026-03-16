@@ -52,6 +52,11 @@ class WP_WhatsApp_Multi_Chat_View
       true
     );
 
+    $appearance = wp_parse_args(
+      get_option('wpwc_appearance', array()),
+      WP_WhatsApp_Multi_Chat_Options::appearance_defaults()
+    );
+
     wp_localize_script(
       'wpwc-frontend',
       'wpWhatsAppMultiChat',
@@ -59,10 +64,7 @@ class WP_WhatsApp_Multi_Chat_View
         'root'       => 'wp-whatsapp-multi-chat-wrapper',
         'baseUrl'    => WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/frontend',
         'accounts'   => $this->get_accounts(),
-        'appearance' => wp_parse_args(
-          get_option('wpwc_appearance', array()),
-          WP_WhatsApp_Multi_Chat_Options::appearance_defaults()
-        ),
+        'appearance' => $this->maybe_translate_appearance($appearance),
       )
     );
   }
@@ -83,8 +85,8 @@ class WP_WhatsApp_Multi_Chat_View
       )
     );
 
-    $exclude_ids = array_map('intval', (array) $conditions['exclude_posts']);
-    $include_ids = array_map('intval', (array) $conditions['include_posts']);
+    $exclude_ids = $this->maybe_translate_post_ids(array_map('intval', (array) $conditions['exclude_posts']));
+    $include_ids = $this->maybe_translate_post_ids(array_map('intval', (array) $conditions['include_posts']));
 
     // Exclusions always win
     if (!empty($exclude_ids) && is_singular() && in_array((int) get_the_ID(), $exclude_ids, true)) {
@@ -139,15 +141,85 @@ class WP_WhatsApp_Multi_Chat_View
     return false;
   }
 
+  /**
+   * When WPML is active, translates an array of stored (original-language) post IDs
+   * to their equivalents in the current language.
+   *
+   * @param int[] $ids
+   * @return int[]
+   */
+  private function maybe_translate_post_ids(array $ids): array
+  {
+    if (!defined('ICL_LANGUAGE_CODE') || empty($ids)) {
+      return $ids;
+    }
+
+    $translated = array();
+    foreach ($ids as $id) {
+      $post_type     = get_post_type($id) ?: 'post';
+      $translated_id = (int) apply_filters('wpml_object_id', $id, $post_type, true);
+      $translated[]  = $translated_id;
+    }
+
+    return $translated;
+  }
+
+  /**
+   * When WPML String Translation is active, returns translated values for
+   * the appearance text fields registered via wpml_register_single_string.
+   *
+   * @param array $appearance
+   * @return array
+   */
+  private function maybe_translate_appearance(array $appearance): array
+  {
+    if (!defined('ICL_LANGUAGE_CODE')) {
+      return $appearance;
+    }
+
+    $context     = 'wp-whatsapp-multi-chat';
+    $text_fields = array(
+      'button_text', 'tooltip_text', 'panel_title', 'panel_subtitle',
+      'cta_text', 'empty_text', 'footer_text',
+    );
+
+    foreach ($text_fields as $field) {
+      if (!empty($appearance[$field])) {
+        $appearance[$field] = apply_filters(
+          'wpml_translate_single_string',
+          $appearance[$field],
+          $context,
+          'appearance_' . $field
+        );
+      }
+    }
+
+    return $appearance;
+  }
+
   private function get_accounts()
   {
-    $posts = get_posts(array(
-      'post_type'   => WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG,
-      'post_status' => 'publish',
-      'numberposts' => -1,
-      'orderby'     => 'menu_order',
-      'order'       => 'ASC',
-    ));
+    $query_args = array(
+      'post_type'        => WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG,
+      'post_status'      => 'publish',
+      'numberposts'      => -1,
+      'orderby'          => 'menu_order',
+      'order'            => 'ASC',
+      'suppress_filters' => false, // allow WPML to filter by current language
+    );
+
+    $posts = get_posts($query_args);
+
+    // If WPML is active and no accounts exist for the current language,
+    // fall back to the default language so the widget is never empty.
+    if (empty($posts) && defined('ICL_LANGUAGE_CODE')) {
+      $default_lang = apply_filters('wpml_default_language', null);
+      if ($default_lang && $default_lang !== ICL_LANGUAGE_CODE) {
+        do_action('wpml_switch_language', $default_lang);
+        $posts = get_posts($query_args);
+        do_action('wpml_switch_language', ICL_LANGUAGE_CODE);
+      }
+    }
 
     $accounts = array();
     foreach ($posts as $post) {

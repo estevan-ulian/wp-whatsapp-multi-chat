@@ -2,6 +2,7 @@
   "include": [
     "index.php",
     "wp-whatsapp-multi-chat.php",
+    "wpml-config.xml",
     "assets",
     "includes"
   ],
