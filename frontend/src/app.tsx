@@ -168,7 +168,7 @@ export function App() {
         onClick={() => { setIsOpen(o => !o); setShowTooltip(false); }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        aria-label="Open WhatsApp chat"
+        aria-label={appearance.aria_open}
         aria-expanded={isOpen}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -224,7 +224,7 @@ export function App() {
             class="wpwc-panel"
             data-corner={corner}
             role="dialog"
-            aria-label="WhatsApp contacts"
+            aria-label={appearance.aria_panel}
             initial={{ opacity: 0, scale: 0.88, y: isBottom ? 12 : -12 }}
             animate={{ opacity: 1, scale: 1,    y: 0 }}
             exit={{    opacity: 0, scale: 0.88, y: isBottom ? 12 : -12 }}

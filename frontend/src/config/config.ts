@@ -25,6 +25,8 @@ export interface AppearanceSettings {
   cta_text: string;
   empty_text: string;
   footer_text: string;
+  aria_open: string;
+  aria_panel: string;
 }
 
 export interface AppParams {
