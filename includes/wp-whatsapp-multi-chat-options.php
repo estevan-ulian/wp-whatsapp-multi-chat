@@ -26,8 +26,8 @@ class WP_WhatsApp_Multi_Chat_Options
   {
     $this->page_hook = add_submenu_page(
       'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG,
-      __('WhatsApp Multi Chat Configuration', 'wp-whatsapp-multi-chat'),
-      __('Configuration', 'wp-whatsapp-multi-chat'),
+      __('Configuração do WhatsApp Multi Chat', 'wp-whatsapp-multi-chat'),
+      __('Configuração', 'wp-whatsapp-multi-chat'),
       'manage_options',
       'wp-whatsapp-multi-chat-options',
       array($this, 'render_options_page')
@@ -56,8 +56,8 @@ class WP_WhatsApp_Multi_Chat_Options
     wp_localize_script('wpwc-admin-options', 'wpwcOptions', array(
       'ajaxUrl'       => admin_url('admin-ajax.php'),
       'nonce'         => wp_create_nonce('wpwc_search_posts'),
-      'noResults'     => __('No results found', 'wp-whatsapp-multi-chat'),
-      'removeLabel'   => __('Remove', 'wp-whatsapp-multi-chat'),
+      'noResults'     => __('Nenhum resultado encontrado', 'wp-whatsapp-multi-chat'),
+      'removeLabel'   => __('Remover', 'wp-whatsapp-multi-chat'),
     ));
   }
 
@@ -104,22 +104,22 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <?php if (isset($_GET['updated']) && '1' === $_GET['updated']) : ?>
         <div class="notice notice-success is-dismissible">
-          <p><?php esc_html_e('Settings saved.', 'wp-whatsapp-multi-chat'); ?></p>
+          <p><?php esc_html_e('Configurações salvas.', 'wp-whatsapp-multi-chat'); ?></p>
         </div>
       <?php endif; ?>
 
       <nav class="nav-tab-wrapper">
         <a href="<?php echo esc_url(add_query_arg('tab', 'display_condition', $base_url)); ?>"
            class="nav-tab <?php echo 'display_condition' === $active_tab ? 'nav-tab-active' : ''; ?>">
-          <?php esc_html_e('Display Conditions', 'wp-whatsapp-multi-chat'); ?>
+          <?php esc_html_e('Condições de Exibição', 'wp-whatsapp-multi-chat'); ?>
         </a>
         <a href="<?php echo esc_url(add_query_arg('tab', 'appearance', $base_url)); ?>"
            class="nav-tab <?php echo 'appearance' === $active_tab ? 'nav-tab-active' : ''; ?>">
-          <?php esc_html_e('Appearance', 'wp-whatsapp-multi-chat'); ?>
+          <?php esc_html_e('Aparência', 'wp-whatsapp-multi-chat'); ?>
         </a>
         <a href="<?php echo esc_url(add_query_arg('tab', 'misc', $base_url)); ?>"
            class="nav-tab <?php echo 'misc' === $active_tab ? 'nav-tab-active' : ''; ?>">
-          <?php esc_html_e('Miscellaneous', 'wp-whatsapp-multi-chat'); ?>
+          <?php esc_html_e('Diversas', 'wp-whatsapp-multi-chat'); ?>
         </a>
       </nav>
 
@@ -166,15 +166,15 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Section: Show widget on ─────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Show widget on', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Exibir widget em', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-radio-group">
           <label class="wpwc-radio-label">
             <input type="radio" name="display_mode" value="everywhere"
               <?php checked($display_mode, 'everywhere'); ?>>
             <span class="wpwc-radio-text">
-              <?php esc_html_e('Entire site', 'wp-whatsapp-multi-chat'); ?>
-              <span class="wpwc-radio-desc"><?php esc_html_e('Show on every page of the site.', 'wp-whatsapp-multi-chat'); ?></span>
+              <?php esc_html_e('Site inteiro', 'wp-whatsapp-multi-chat'); ?>
+              <span class="wpwc-radio-desc"><?php esc_html_e('Exibir em todas as páginas do site.', 'wp-whatsapp-multi-chat'); ?></span>
             </span>
           </label>
 
@@ -182,8 +182,8 @@ class WP_WhatsApp_Multi_Chat_Options
             <input type="radio" name="display_mode" value="manual"
               <?php checked($display_mode, 'manual'); ?>>
             <span class="wpwc-radio-text">
-              <?php esc_html_e('Manual selection', 'wp-whatsapp-multi-chat'); ?>
-              <span class="wpwc-radio-desc"><?php esc_html_e('Choose exactly where the widget appears.', 'wp-whatsapp-multi-chat'); ?></span>
+              <?php esc_html_e('Seleção manual', 'wp-whatsapp-multi-chat'); ?>
+              <span class="wpwc-radio-desc"><?php esc_html_e('Escolha exatamente onde o widget será exibido.', 'wp-whatsapp-multi-chat'); ?></span>
             </span>
           </label>
         </div>
@@ -191,21 +191,21 @@ class WP_WhatsApp_Multi_Chat_Options
         <div class="wpwc-manual-conditions<?php echo 'everywhere' === $display_mode ? ' is-hidden' : ''; ?>">
 
           <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Home page', 'wp-whatsapp-multi-chat'); ?></div>
+            <div class="wpwc-condition-label"><?php esc_html_e('Página inicial', 'wp-whatsapp-multi-chat'); ?></div>
             <div class="wpwc-condition-control">
               <label class="wpwc-checkbox-label">
                 <input type="checkbox" name="show_front_page" value="1" <?php checked($show_front_page); ?>>
-                <?php esc_html_e('Front page', 'wp-whatsapp-multi-chat'); ?>
+                <?php esc_html_e('Página inicial', 'wp-whatsapp-multi-chat'); ?>
               </label>
             </div>
           </div>
 
           <?php if (!empty($post_types)) : ?>
           <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Post types', 'wp-whatsapp-multi-chat'); ?></div>
+            <div class="wpwc-condition-label"><?php esc_html_e('Tipos de post', 'wp-whatsapp-multi-chat'); ?></div>
             <div class="wpwc-condition-control">
               <fieldset>
-                <legend class="screen-reader-text"><?php esc_html_e('Post Types', 'wp-whatsapp-multi-chat'); ?></legend>
+                <legend class="screen-reader-text"><?php esc_html_e('Tipos de post', 'wp-whatsapp-multi-chat'); ?></legend>
                 <?php foreach ($post_types as $pt) : ?>
                 <label class="wpwc-checkbox-label">
                   <input type="checkbox" name="post_types[]" value="<?php echo esc_attr($pt->name); ?>"
@@ -215,17 +215,17 @@ class WP_WhatsApp_Multi_Chat_Options
                 </label>
                 <?php endforeach; ?>
               </fieldset>
-              <p class="description"><?php esc_html_e('Show on single posts of the selected types.', 'wp-whatsapp-multi-chat'); ?></p>
+              <p class="description"><?php esc_html_e('Exibir em posts individuais dos tipos selecionados.', 'wp-whatsapp-multi-chat'); ?></p>
             </div>
           </div>
           <?php endif; ?>
 
           <?php if (!empty($archives)) : ?>
           <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Archive pages', 'wp-whatsapp-multi-chat'); ?></div>
+            <div class="wpwc-condition-label"><?php esc_html_e('Páginas de arquivo', 'wp-whatsapp-multi-chat'); ?></div>
             <div class="wpwc-condition-control">
               <fieldset>
-                <legend class="screen-reader-text"><?php esc_html_e('Archives', 'wp-whatsapp-multi-chat'); ?></legend>
+                <legend class="screen-reader-text"><?php esc_html_e('Arquivos', 'wp-whatsapp-multi-chat'); ?></legend>
                 <?php foreach ($archives as $key => $label) : ?>
                 <label class="wpwc-checkbox-label">
                   <input type="checkbox" name="archives[]" value="<?php echo esc_attr($key); ?>"
@@ -234,18 +234,18 @@ class WP_WhatsApp_Multi_Chat_Options
                 </label>
                 <?php endforeach; ?>
               </fieldset>
-              <p class="description"><?php esc_html_e('Show on the selected archive / special pages.', 'wp-whatsapp-multi-chat'); ?></p>
+              <p class="description"><?php esc_html_e('Exibir nas páginas de arquivo / especiais selecionadas.', 'wp-whatsapp-multi-chat'); ?></p>
             </div>
           </div>
           <?php endif; ?>
 
           <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Specific pages / posts', 'wp-whatsapp-multi-chat'); ?></div>
+            <div class="wpwc-condition-label"><?php esc_html_e('Páginas / posts específicos', 'wp-whatsapp-multi-chat'); ?></div>
             <div class="wpwc-condition-control">
               <div class="wpwc-post-selector" data-field="include_posts">
                 <div class="wpwc-search-wrap">
                   <input type="text" class="wpwc-search-input regular-text"
-                         placeholder="<?php esc_attr_e('Search pages or posts…', 'wp-whatsapp-multi-chat'); ?>"
+                         placeholder="<?php esc_attr_e('Buscar páginas ou posts…', 'wp-whatsapp-multi-chat'); ?>"
                          autocomplete="off">
                   <div class="wpwc-search-results" hidden></div>
                 </div>
@@ -254,13 +254,13 @@ class WP_WhatsApp_Multi_Chat_Options
                   <li data-id="<?php echo esc_attr($item['id']); ?>">
                     <span class="wpwc-item-title"><?php echo esc_html($item['title']); ?></span>
                     <span class="wpwc-type-label"><?php echo esc_html($item['type']); ?></span>
-                    <button type="button" class="wpwc-remove-item button-link" aria-label="<?php esc_attr_e('Remove', 'wp-whatsapp-multi-chat'); ?>">&times;</button>
+                    <button type="button" class="wpwc-remove-item button-link" aria-label="<?php esc_attr_e('Remover', 'wp-whatsapp-multi-chat'); ?>">&times;</button>
                     <input type="hidden" name="include_posts[]" value="<?php echo esc_attr($item['id']); ?>">
                   </li>
                   <?php endforeach; ?>
                 </ul>
               </div>
-              <p class="description"><?php esc_html_e('Always show on these pages or posts (added to the conditions above).', 'wp-whatsapp-multi-chat'); ?></p>
+              <p class="description"><?php esc_html_e('Sempre exibir nestas páginas ou posts (acumulado às condições acima).', 'wp-whatsapp-multi-chat'); ?></p>
             </div>
           </div>
 
@@ -269,8 +269,8 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Section: Exceptions ─────────────────────────────────── -->
       <div class="wpwc-section wpwc-section-exceptions">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Exceptions — never show on', 'wp-whatsapp-multi-chat'); ?></h2>
-        <p class="wpwc-section-description"><?php esc_html_e('The widget will be hidden on these pages regardless of the rules above.', 'wp-whatsapp-multi-chat'); ?></p>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Exceções — nunca exibir em', 'wp-whatsapp-multi-chat'); ?></h2>
+        <p class="wpwc-section-description"><?php esc_html_e('O widget ficará oculto nestas páginas independentemente das regras acima.', 'wp-whatsapp-multi-chat'); ?></p>
 
         <div class="wpwc-post-selector" data-field="exclude_posts">
           <div class="wpwc-search-wrap">
@@ -292,7 +292,7 @@ class WP_WhatsApp_Multi_Chat_Options
         </div>
       </div><!-- /.wpwc-section -->
 
-      <?php submit_button(__('Save Settings', 'wp-whatsapp-multi-chat')); ?>
+      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
     </form>
     <?php
   }
@@ -311,18 +311,18 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Position ─────────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Position', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Posição', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Corner', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Canto', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <div class="wpwc-corner-picker">
               <?php
               $corners = array(
-                'top-left'     => __('Top Left',     'wp-whatsapp-multi-chat'),
-                'top-right'    => __('Top Right',    'wp-whatsapp-multi-chat'),
-                'bottom-left'  => __('Bottom Left',  'wp-whatsapp-multi-chat'),
-                'bottom-right' => __('Bottom Right', 'wp-whatsapp-multi-chat'),
+                'top-left'     => __('Superior Esquerdo', 'wp-whatsapp-multi-chat'),
+                'top-right'    => __('Superior Direito',  'wp-whatsapp-multi-chat'),
+                'bottom-left'  => __('Inferior Esquerdo', 'wp-whatsapp-multi-chat'),
+                'bottom-right' => __('Inferior Direito',  'wp-whatsapp-multi-chat'),
               );
               foreach ($corners as $val => $label) : ?>
               <label class="wpwc-corner-option <?php echo $val; ?>" title="<?php echo esc_attr($label); ?>">
@@ -336,7 +336,7 @@ class WP_WhatsApp_Multi_Chat_Options
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Offset', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Deslocamento', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control wpwc-offset-row">
             <label class="wpwc-inline-label">
               <?php esc_html_e('Horizontal', 'wp-whatsapp-multi-chat'); ?>
@@ -356,7 +356,7 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Button Style ─────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Button Style', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Estilo do Botão', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
           <div class="wpwc-condition-label"><?php esc_html_e('Layout', 'wp-whatsapp-multi-chat'); ?></div>
@@ -366,16 +366,16 @@ class WP_WhatsApp_Multi_Chat_Options
                 <input type="radio" name="button_style" value="icon-only"
                   <?php checked($o['button_style'], 'icon-only'); ?>>
                 <span class="wpwc-radio-text">
-                  <?php esc_html_e('Icon only', 'wp-whatsapp-multi-chat'); ?>
-                  <span class="wpwc-radio-desc"><?php esc_html_e('Circular button with the WhatsApp icon.', 'wp-whatsapp-multi-chat'); ?></span>
+                  <?php esc_html_e('Apenas ícone', 'wp-whatsapp-multi-chat'); ?>
+                  <span class="wpwc-radio-desc"><?php esc_html_e('Botão circular com o ícone do WhatsApp.', 'wp-whatsapp-multi-chat'); ?></span>
                 </span>
               </label>
               <label class="wpwc-radio-label">
                 <input type="radio" name="button_style" value="icon-text"
                   <?php checked($o['button_style'], 'icon-text'); ?>>
                 <span class="wpwc-radio-text">
-                  <?php esc_html_e('Icon + text', 'wp-whatsapp-multi-chat'); ?>
-                  <span class="wpwc-radio-desc"><?php esc_html_e('Pill-shaped button with icon and label.', 'wp-whatsapp-multi-chat'); ?></span>
+                  <?php esc_html_e('Ícone + texto', 'wp-whatsapp-multi-chat'); ?>
+                  <span class="wpwc-radio-desc"><?php esc_html_e('Botão arredondado com ícone e rótulo.', 'wp-whatsapp-multi-chat'); ?></span>
                 </span>
               </label>
             </div>
@@ -383,22 +383,22 @@ class WP_WhatsApp_Multi_Chat_Options
         </div>
 
         <div class="wpwc-condition-row wpwc-button-text-row<?php echo 'icon-only' === $o['button_style'] ? ' is-hidden' : ''; ?>">
-          <div class="wpwc-condition-label"><?php esc_html_e('Button text', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Texto do botão', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="button_text" value="<?php echo esc_attr($o['button_text']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. Chat with us', 'wp-whatsapp-multi-chat'); ?>">
+                   placeholder="<?php esc_attr_e('ex.: Fale conosco', 'wp-whatsapp-multi-chat'); ?>">
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Size', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Tamanho', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <div class="wpwc-size-group">
               <?php
               $sizes = array(
-                'small'  => __('Small',  'wp-whatsapp-multi-chat'),
-                'medium' => __('Medium', 'wp-whatsapp-multi-chat'),
-                'large'  => __('Large',  'wp-whatsapp-multi-chat'),
+                'small'  => __('Pequeno', 'wp-whatsapp-multi-chat'),
+                'medium' => __('Médio',   'wp-whatsapp-multi-chat'),
+                'large'  => __('Grande',  'wp-whatsapp-multi-chat'),
               );
               foreach ($sizes as $val => $label) : ?>
               <label class="wpwc-size-option">
@@ -414,10 +414,10 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Colors ───────────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Colors', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Cores', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Background', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Fundo', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control wpwc-color-row">
             <input type="color" name="color_bg" value="<?php echo esc_attr($o['color_bg']); ?>" class="wpwc-color-input">
             <input type="text" name="color_bg_text" value="<?php echo esc_attr($o['color_bg']); ?>" class="wpwc-color-hex small-text" maxlength="7" pattern="#[0-9a-fA-F]{6}">
@@ -425,7 +425,7 @@ class WP_WhatsApp_Multi_Chat_Options
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Icon / text', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Ícone / texto', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control wpwc-color-row">
             <input type="color" name="color_fg" value="<?php echo esc_attr($o['color_fg']); ?>" class="wpwc-color-input">
             <input type="text" name="color_fg_text" value="<?php echo esc_attr($o['color_fg']); ?>" class="wpwc-color-hex small-text" maxlength="7" pattern="#[0-9a-fA-F]{6}">
@@ -435,17 +435,17 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Attention Animation ───────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Attention Animation', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Animação de Atenção', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Effect', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Efeito', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <div class="wpwc-radio-group wpwc-style-group">
               <?php
               $animations = array(
-                'none'   => array('label' => __('None',   'wp-whatsapp-multi-chat'), 'desc' => __('No animation.', 'wp-whatsapp-multi-chat')),
-                'pulse'  => array('label' => __('Pulse',  'wp-whatsapp-multi-chat'), 'desc' => __('Expanding ring that repeats.', 'wp-whatsapp-multi-chat')),
-                'bounce' => array('label' => __('Bounce', 'wp-whatsapp-multi-chat'), 'desc' => __('Gentle up-and-down motion.', 'wp-whatsapp-multi-chat')),
+                'none'   => array('label' => __('Nenhum',  'wp-whatsapp-multi-chat'), 'desc' => __('Sem animação.', 'wp-whatsapp-multi-chat')),
+                'pulse'  => array('label' => __('Pulso',   'wp-whatsapp-multi-chat'), 'desc' => __('Anel expansivo que se repete.', 'wp-whatsapp-multi-chat')),
+                'bounce' => array('label' => __('Salto',   'wp-whatsapp-multi-chat'), 'desc' => __('Movimento suave para cima e para baixo.', 'wp-whatsapp-multi-chat')),
               );
               foreach ($animations as $val => $anim) : ?>
               <label class="wpwc-radio-label">
@@ -464,42 +464,42 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Tooltip ─────────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Tooltip', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Dica', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Text', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Texto', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="tooltip_text" value="<?php echo esc_attr($o['tooltip_text']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. Need help? Chat with us!', 'wp-whatsapp-multi-chat'); ?>">
-            <p class="description"><?php esc_html_e('Leave empty to disable the tooltip.', 'wp-whatsapp-multi-chat'); ?></p>
+                   placeholder="<?php esc_attr_e('ex.: Precisa de ajuda? Fale conosco!', 'wp-whatsapp-multi-chat'); ?>">
+            <p class="description"><?php esc_html_e('Deixe em branco para desativar a dica.', 'wp-whatsapp-multi-chat'); ?></p>
           </div>
         </div>
       </div>
 
       <!-- ── Behaviour ──────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Behaviour', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Comportamento', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Appear after', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Aparecer após', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control wpwc-offset-row">
             <div class="wpwc-number-wrap">
-              <input type="number" name="appear_delay" value="<?php echo esc_attr($o['appear_delay']); ?>" min="0" max="10" step="0.5" class="small-text"> <?php esc_html_e('seconds', 'wp-whatsapp-multi-chat'); ?>
+              <input type="number" name="appear_delay" value="<?php echo esc_attr($o['appear_delay']); ?>" min="0" max="10" step="0.5" class="small-text"> <?php esc_html_e('segundos', 'wp-whatsapp-multi-chat'); ?>
             </div>
-            <p class="description"><?php esc_html_e('Delay before the widget becomes visible (0 = instant).', 'wp-whatsapp-multi-chat'); ?></p>
+            <p class="description"><?php esc_html_e('Atraso antes de o widget ficar visível (0 = instantâneo).', 'wp-whatsapp-multi-chat'); ?></p>
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Visibility', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Visibilidade', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <label class="wpwc-checkbox-label">
               <input type="checkbox" name="hide_mobile" value="1" <?php checked(!empty($o['hide_mobile'])); ?>>
-              <?php esc_html_e('Hide on mobile', 'wp-whatsapp-multi-chat'); ?>
+              <?php esc_html_e('Ocultar no mobile', 'wp-whatsapp-multi-chat'); ?>
             </label>
             <label class="wpwc-checkbox-label">
               <input type="checkbox" name="hide_desktop" value="1" <?php checked(!empty($o['hide_desktop'])); ?>>
-              <?php esc_html_e('Hide on desktop', 'wp-whatsapp-multi-chat'); ?>
+              <?php esc_html_e('Ocultar no desktop', 'wp-whatsapp-multi-chat'); ?>
             </label>
           </div>
         </div>
@@ -507,52 +507,52 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Text / Labels ─────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Text / Labels', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Textos / Rótulos', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Panel title', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Título do painel', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="panel_title" value="<?php echo esc_attr($o['panel_title']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. WhatsApp', 'wp-whatsapp-multi-chat'); ?>">
+                   placeholder="<?php esc_attr_e('ex.: WhatsApp', 'wp-whatsapp-multi-chat'); ?>">
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Panel subtitle', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Subtítulo do painel', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="panel_subtitle" value="<?php echo esc_attr($o['panel_subtitle']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. Typically replies within minutes', 'wp-whatsapp-multi-chat'); ?>">
+                   placeholder="<?php esc_attr_e('ex.: Geralmente responde em minutos', 'wp-whatsapp-multi-chat'); ?>">
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Contact CTA', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('CTA do contato', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="cta_text" value="<?php echo esc_attr($o['cta_text']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. Chat', 'wp-whatsapp-multi-chat'); ?>">
-            <p class="description"><?php esc_html_e('Label shown next to the arrow on each contact row.', 'wp-whatsapp-multi-chat'); ?></p>
+                   placeholder="<?php esc_attr_e('ex.: Conversar', 'wp-whatsapp-multi-chat'); ?>">
+            <p class="description"><?php esc_html_e('Rótulo exibido ao lado da seta em cada linha de contato.', 'wp-whatsapp-multi-chat'); ?></p>
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('No contacts message', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Mensagem sem contatos', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="empty_text" value="<?php echo esc_attr($o['empty_text']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. No contacts available.', 'wp-whatsapp-multi-chat'); ?>">
+                   placeholder="<?php esc_attr_e('ex.: Nenhum contato disponível.', 'wp-whatsapp-multi-chat'); ?>">
           </div>
         </div>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Footer text', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Texto do rodapé', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <input type="text" name="footer_text" value="<?php echo esc_attr($o['footer_text']); ?>" class="regular-text"
-                   placeholder="<?php esc_attr_e('e.g. End-to-end encrypted', 'wp-whatsapp-multi-chat'); ?>">
-            <p class="description"><?php esc_html_e('Leave empty to hide the footer.', 'wp-whatsapp-multi-chat'); ?></p>
+                   placeholder="<?php esc_attr_e('ex.: Criptografia de ponta a ponta', 'wp-whatsapp-multi-chat'); ?>">
+            <p class="description"><?php esc_html_e('Deixe em branco para ocultar o rodapé.', 'wp-whatsapp-multi-chat'); ?></p>
           </div>
         </div>
       </div>
 
-      <?php submit_button(__('Save Settings', 'wp-whatsapp-multi-chat')); ?>
+      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
     </form>
     <?php
   }
@@ -562,7 +562,7 @@ class WP_WhatsApp_Multi_Chat_Options
     check_admin_referer('wpwc_save_appearance', 'wpwc_appearance_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have sufficient permissions.', 'wp-whatsapp-multi-chat'));
+      wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
     }
 
     $valid_corners    = array('top-left', 'top-right', 'bottom-left', 'bottom-right');
@@ -630,7 +630,7 @@ class WP_WhatsApp_Multi_Chat_Options
       'offset_x'        => 20,
       'offset_y'        => 20,
       'button_style'    => 'icon-only',
-      'button_text'     => __('Chat with us', 'wp-whatsapp-multi-chat'),
+      'button_text'     => __('Fale conosco', 'wp-whatsapp-multi-chat'),
       'button_size'     => 'medium',
       'color_bg'        => '#25d366',
       'color_fg'        => '#ffffff',
@@ -640,12 +640,12 @@ class WP_WhatsApp_Multi_Chat_Options
       'hide_mobile'     => 0,
       'hide_desktop'    => 0,
       'panel_title'     => __('WhatsApp', 'wp-whatsapp-multi-chat'),
-      'panel_subtitle'  => __('Typically replies within minutes', 'wp-whatsapp-multi-chat'),
-      'cta_text'        => __('Chat', 'wp-whatsapp-multi-chat'),
-      'empty_text'      => __('No contacts available.', 'wp-whatsapp-multi-chat'),
-      'footer_text'     => __('End-to-end encrypted', 'wp-whatsapp-multi-chat'),
-      'aria_open'       => __('Open WhatsApp chat', 'wp-whatsapp-multi-chat'),
-      'aria_panel'      => __('WhatsApp contacts', 'wp-whatsapp-multi-chat'),
+      'panel_subtitle'  => __('Geralmente responde em minutos', 'wp-whatsapp-multi-chat'),
+      'cta_text'        => __('Conversar', 'wp-whatsapp-multi-chat'),
+      'empty_text'      => __('Nenhum contato disponível.', 'wp-whatsapp-multi-chat'),
+      'footer_text'     => __('Criptografia de ponta a ponta', 'wp-whatsapp-multi-chat'),
+      'aria_open'       => __('Abrir chat do WhatsApp', 'wp-whatsapp-multi-chat'),
+      'aria_panel'      => __('Contatos do WhatsApp', 'wp-whatsapp-multi-chat'),
     );
   }
 
@@ -662,23 +662,23 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <!-- ── Uninstall ───────────────────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Uninstall', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Desinstalar', 'wp-whatsapp-multi-chat'); ?></h2>
 
         <div class="wpwc-condition-row">
-          <div class="wpwc-condition-label"><?php esc_html_e('Remove data on uninstall', 'wp-whatsapp-multi-chat'); ?></div>
+          <div class="wpwc-condition-label"><?php esc_html_e('Remover dados ao desinstalar', 'wp-whatsapp-multi-chat'); ?></div>
           <div class="wpwc-condition-control">
             <label class="wpwc-checkbox-label">
               <input type="checkbox" name="delete_on_uninstall" value="1" <?php checked($delete_on_uninstall); ?>>
-              <?php esc_html_e('Delete all plugin settings and data when the plugin is uninstalled.', 'wp-whatsapp-multi-chat'); ?>
+              <?php esc_html_e('Excluir todas as configurações e dados do plugin ao desinstalar.', 'wp-whatsapp-multi-chat'); ?>
             </label>
             <p class="description">
-              <?php esc_html_e('When checked, all options and WhatsApp contact records created by this plugin will be permanently removed upon uninstallation. This action cannot be undone.', 'wp-whatsapp-multi-chat'); ?>
+              <?php esc_html_e('Quando marcado, todas as opções e registros de contatos do WhatsApp criados por este plugin serão removidos permanentemente na desinstalação. Esta ação não pode ser desfeita.', 'wp-whatsapp-multi-chat'); ?>
             </p>
           </div>
         </div>
       </div>
 
-      <?php submit_button(__('Save Settings', 'wp-whatsapp-multi-chat')); ?>
+      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
     </form>
     <?php
   }
@@ -688,7 +688,7 @@ class WP_WhatsApp_Multi_Chat_Options
     check_admin_referer('wpwc_save_misc', 'wpwc_misc_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have sufficient permissions.', 'wp-whatsapp-multi-chat'));
+      wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
     }
 
     $options = array(
@@ -711,7 +711,7 @@ class WP_WhatsApp_Multi_Chat_Options
     check_admin_referer('wpwc_save_display_conditions', 'wpwc_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have sufficient permissions.', 'wp-whatsapp-multi-chat'));
+      wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
     }
 
     $options = array(
@@ -752,19 +752,19 @@ class WP_WhatsApp_Multi_Chat_Options
   private function get_available_archives()
   {
     $archives = array(
-      'category' => __('Category Archive', 'wp-whatsapp-multi-chat'),
-      'tag'      => __('Tag Archive', 'wp-whatsapp-multi-chat'),
-      'author'   => __('Author Archive', 'wp-whatsapp-multi-chat'),
-      'date'     => __('Date Archive', 'wp-whatsapp-multi-chat'),
-      'search'   => __('Search Results', 'wp-whatsapp-multi-chat'),
-      '404'      => __('404 Page', 'wp-whatsapp-multi-chat'),
+      'category' => __('Arquivo de Categorias', 'wp-whatsapp-multi-chat'),
+      'tag'      => __('Arquivo de Tags', 'wp-whatsapp-multi-chat'),
+      'author'   => __('Arquivo de Autores', 'wp-whatsapp-multi-chat'),
+      'date'     => __('Arquivo por Data', 'wp-whatsapp-multi-chat'),
+      'search'   => __('Resultados de Busca', 'wp-whatsapp-multi-chat'),
+      '404'      => __('Página 404', 'wp-whatsapp-multi-chat'),
     );
 
     $taxonomies = get_taxonomies(array('public' => true, '_builtin' => false), 'objects');
     foreach ($taxonomies as $taxonomy) {
       $archives['tax_' . $taxonomy->name] = sprintf(
         /* translators: %s: taxonomy name */
-        __('%s Archive', 'wp-whatsapp-multi-chat'),
+        __('Arquivo de %s', 'wp-whatsapp-multi-chat'),
         $taxonomy->labels->name
       );
     }

@@ -1,0 +1,517 @@
+# English (US) translation for WhatsApp Multi Chat
+# Copyright (C) 2026 Estevan Ulian
+# This file is distributed under the same license as the WhatsApp Multi Chat plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: WhatsApp Multi Chat 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/estevan-ulian/wp-whatsapp-multi-chat\n"
+"POT-Creation-Date: 2026-03-18 00:00:00+00:00\n"
+"PO-Revision-Date: 2026-03-18 00:00:00+00:00\n"
+"Last-Translator: Estevan Ulian\n"
+"Language-Team: English (US)\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Manual\n"
+"X-Domain: wp-whatsapp-multi-chat\n"
+
+#. Plugin Name of the plugin
+msgid "WhatsApp Multi Chat"
+msgstr "WhatsApp Multi Chat"
+
+#. Description of the plugin
+msgid "A simple WhatsApp chat plugin for WordPress."
+msgstr "A simple WhatsApp chat plugin for WordPress."
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgctxt "post type general name"
+msgid "Chats do WhatsApp"
+msgstr "WhatsApp Chats"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgctxt "post type singular name"
+msgid "Chat do WhatsApp"
+msgstr "WhatsApp Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgctxt "admin menu"
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgctxt "add new on admin bar"
+msgid "Chat"
+msgstr "Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgctxt "add new button"
+msgid "Adicionar Novo"
+msgstr "Add New"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Adicionar Novo Chat"
+msgstr "Add New Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Novo Chat"
+msgstr "New Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Editar Chat"
+msgstr "Edit Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Ver Chat"
+msgstr "View Chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Todos os Chats"
+msgstr "All Chats"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Buscar Chats"
+msgstr "Search Chats"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Chats Pai:"
+msgstr "Parent Chats:"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Nenhum chat encontrado."
+msgstr "No chats found."
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Nenhum chat encontrado na Lixeira."
+msgstr "No chats found in Trash."
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Chats do WhatsApp"
+msgstr "WhatsApp Chats"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Detalhes da Conta"
+msgstr "Account Details"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Nome"
+msgstr "Name"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Número de Telefone"
+msgstr "Phone Number"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Mensagem Predefinida"
+msgstr "Predefined Message"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Inclua o código do país e o DDD"
+msgstr "Include country code and area code"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Esta mensagem será pré-preenchida no chat do WhatsApp"
+msgstr "This message will be pre-filled in the WhatsApp chat"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "ex.: Suporte"
+msgstr "e.g., Support"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "ex.: 5511912341234"
+msgstr "e.g., 5511912341234"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "ex.: Olá, vim pelo site e gostaria de um orçamento."
+msgstr "e.g., Hello, I came through the website and would like a quote."
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Foto"
+msgstr "Picture"
+
+#: includes/wp-whatsapp-multi-chat-accounts.php
+msgid "Número"
+msgstr "Number"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Configuração do WhatsApp Multi Chat"
+msgstr "WhatsApp Multi Chat Configuration"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Configuração"
+msgstr "Configuration"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Nenhum resultado encontrado"
+msgstr "No results found"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Remover"
+msgstr "Remove"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Configurações salvas."
+msgstr "Settings saved."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Condições de Exibição"
+msgstr "Display Conditions"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Aparência"
+msgstr "Appearance"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Diversas"
+msgstr "Miscellaneous"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Exibir widget em"
+msgstr "Show widget on"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Site inteiro"
+msgstr "Entire site"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Exibir em todas as páginas do site."
+msgstr "Show on every page of the site."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Seleção manual"
+msgstr "Manual selection"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Escolha exatamente onde o widget será exibido."
+msgstr "Choose exactly where the widget appears."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Página inicial"
+msgstr "Home page"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Tipos de post"
+msgstr "Post types"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Exibir em posts individuais dos tipos selecionados."
+msgstr "Show on single posts of the selected types."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Páginas de arquivo"
+msgstr "Archive pages"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Exibir nas páginas de arquivo / especiais selecionadas."
+msgstr "Show on the selected archive / special pages."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Páginas / posts específicos"
+msgstr "Specific pages / posts"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Sempre exibir nestas páginas ou posts (acumulado às condições acima)."
+msgstr "Always show on these pages or posts (added to the conditions above)."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Exceções — nunca exibir em"
+msgstr "Exceptions — never show on"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "O widget ficará oculto nestas páginas independentemente das regras acima."
+msgstr "The widget will be hidden on these pages regardless of the rules above."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Salvar Configurações"
+msgstr "Save Settings"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Buscar páginas ou posts…"
+msgstr "Search pages or posts…"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Posição"
+msgstr "Position"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Canto"
+msgstr "Corner"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Superior Esquerdo"
+msgstr "Top Left"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Superior Direito"
+msgstr "Top Right"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Inferior Esquerdo"
+msgstr "Bottom Left"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Inferior Direito"
+msgstr "Bottom Right"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Deslocamento"
+msgstr "Offset"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Horizontal"
+msgstr "Horizontal"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Vertical"
+msgstr "Vertical"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Estilo do Botão"
+msgstr "Button Style"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Layout"
+msgstr "Layout"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Apenas ícone"
+msgstr "Icon only"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Botão circular com o ícone do WhatsApp."
+msgstr "Circular button with the WhatsApp icon."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Ícone + texto"
+msgstr "Icon + text"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Botão arredondado com ícone e rótulo."
+msgstr "Pill-shaped button with icon and label."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Texto do botão"
+msgstr "Button text"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "ex.: Fale conosco"
+msgstr "e.g. Chat with us"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Tamanho"
+msgstr "Size"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Pequeno"
+msgstr "Small"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Médio"
+msgstr "Medium"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Grande"
+msgstr "Large"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Cores"
+msgstr "Colors"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Fundo"
+msgstr "Background"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Ícone / texto"
+msgstr "Icon / text"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Animação de Atenção"
+msgstr "Attention Animation"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Efeito"
+msgstr "Effect"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Nenhum"
+msgstr "None"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Sem animação."
+msgstr "No animation."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Pulso"
+msgstr "Pulse"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Anel expansivo que se repete."
+msgstr "Expanding ring that repeats."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Salto"
+msgstr "Bounce"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Movimento suave para cima e para baixo."
+msgstr "Gentle up-and-down motion."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Dica"
+msgstr "Tooltip"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Texto"
+msgstr "Text"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "ex.: Precisa de ajuda? Fale conosco!"
+msgstr "e.g. Need help? Chat with us!"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Deixe em branco para desativar a dica."
+msgstr "Leave empty to disable the tooltip."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Comportamento"
+msgstr "Behaviour"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Aparecer após"
+msgstr "Appear after"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "segundos"
+msgstr "seconds"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Atraso antes de o widget ficar visível (0 = instantâneo)."
+msgstr "Delay before the widget becomes visible (0 = instant)."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Visibilidade"
+msgstr "Visibility"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Ocultar no mobile"
+msgstr "Hide on mobile"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Ocultar no desktop"
+msgstr "Hide on desktop"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Textos / Rótulos"
+msgstr "Text / Labels"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Título do painel"
+msgstr "Panel title"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Subtítulo do painel"
+msgstr "Panel subtitle"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "CTA do contato"
+msgstr "Contact CTA"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Rótulo exibido ao lado da seta em cada linha de contato."
+msgstr "Label shown next to the arrow on each contact row."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Mensagem sem contatos"
+msgstr "No contacts message"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Texto do rodapé"
+msgstr "Footer text"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Deixe em branco para ocultar o rodapé."
+msgstr "Leave empty to hide the footer."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Você não tem permissões suficientes."
+msgstr "You do not have sufficient permissions."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Arquivo de Categorias"
+msgstr "Category Archive"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Arquivo de Tags"
+msgstr "Tag Archive"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Arquivo de Autores"
+msgstr "Author Archive"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Arquivo por Data"
+msgstr "Date Archive"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Resultados de Busca"
+msgstr "Search Results"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Página 404"
+msgstr "404 Page"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+#. translators: %s: post type name
+msgid "Arquivo de %s"
+msgstr "%s Archive"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Desinstalar"
+msgstr "Uninstall"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Remover dados ao desinstalar"
+msgstr "Remove data on uninstall"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Excluir todas as configurações e dados do plugin ao desinstalar."
+msgstr "Delete all plugin settings and data when the plugin is uninstalled."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Quando marcado, todas as opções e registros de contatos do WhatsApp criados por este plugin serão removidos permanentemente na desinstalação. Esta ação não pode ser desfeita."
+msgstr "When checked, all options and WhatsApp contact records created by this plugin will be permanently removed upon uninstallation. This action cannot be undone."
+
+#. Appearance defaults — also used as frontend labels
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Fale conosco"
+msgstr "Chat with us"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Geralmente responde em minutos"
+msgstr "Typically replies within minutes"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Conversar"
+msgstr "Chat"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Nenhum contato disponível."
+msgstr "No contacts available."
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Criptografia de ponta a ponta"
+msgstr "End-to-end encrypted"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Abrir chat do WhatsApp"
+msgstr "Open WhatsApp chat"
+
+#: includes/wp-whatsapp-multi-chat-options.php
+msgid "Contatos do WhatsApp"
+msgstr "WhatsApp contacts"

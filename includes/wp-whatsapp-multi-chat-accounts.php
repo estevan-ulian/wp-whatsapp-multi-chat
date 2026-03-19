@@ -38,25 +38,25 @@ class WP_WhatsApp_Multi_Chat_Accounts
   public function register_account_post_type()
   {
     $labels = array(
-      'name'               => _x('WhatsApp Chats', 'post type general name', 'wp-whatsapp-multi-chat'),
-      'singular_name'      => _x('WhatsApp Chat', 'post type singular name', 'wp-whatsapp-multi-chat'),
+      'name'               => _x('Chats do WhatsApp', 'post type general name', 'wp-whatsapp-multi-chat'),
+      'singular_name'      => _x('Chat do WhatsApp', 'post type singular name', 'wp-whatsapp-multi-chat'),
       'menu_name'          => _x('WhatsApp', 'admin menu', 'wp-whatsapp-multi-chat'),
       'name_admin_bar'     => _x('Chat', 'add new on admin bar', 'wp-whatsapp-multi-chat'),
-      'add_new'            => _x('Add New', 'book', 'wp-whatsapp-multi-chat'),
-      'add_new_item'       => __('Add New Chat', 'wp-whatsapp-multi-chat'),
-      'new_item'           => __('New Chat', 'wp-whatsapp-multi-chat'),
-      'edit_item'          => __('Edit Chat', 'wp-whatsapp-multi-chat'),
-      'view_item'          => __('View Chat', 'wp-whatsapp-multi-chat'),
-      'all_items'          => __('All Chats', 'wp-whatsapp-multi-chat'),
-      'search_items'       => __('Search Chats', 'wp-whatsapp-multi-chat'),
-      'parent_item_colon'  => __('Parent Chats:', 'wp-whatsapp-multi-chat'),
-      'not_found'          => __('No chats found.', 'wp-whatsapp-multi-chat'),
-      'not_found_in_trash' => __('No chats found in Trash.', 'wp-whatsapp-multi-chat')
+      'add_new'            => _x('Adicionar Novo', 'add new button', 'wp-whatsapp-multi-chat'),
+      'add_new_item'       => __('Adicionar Novo Chat', 'wp-whatsapp-multi-chat'),
+      'new_item'           => __('Novo Chat', 'wp-whatsapp-multi-chat'),
+      'edit_item'          => __('Editar Chat', 'wp-whatsapp-multi-chat'),
+      'view_item'          => __('Ver Chat', 'wp-whatsapp-multi-chat'),
+      'all_items'          => __('Todos os Chats', 'wp-whatsapp-multi-chat'),
+      'search_items'       => __('Buscar Chats', 'wp-whatsapp-multi-chat'),
+      'parent_item_colon'  => __('Chats Pai:', 'wp-whatsapp-multi-chat'),
+      'not_found'          => __('Nenhum chat encontrado.', 'wp-whatsapp-multi-chat'),
+      'not_found_in_trash' => __('Nenhum chat encontrado na Lixeira.', 'wp-whatsapp-multi-chat')
     );
 
     $args = array(
       'labels'             => $labels,
-      'description'        => __('WhatsApp Chats', 'wp-whatsapp-multi-chat'),
+      'description'        => __('Chats do WhatsApp', 'wp-whatsapp-multi-chat'),
       'public'             => false,
       'exclude_from_search' => true,
       'show_ui'            => true,
@@ -75,7 +75,7 @@ class WP_WhatsApp_Multi_Chat_Accounts
   {
     add_meta_box(
       self::POST_TYPE_SLUG . '_details',
-      __('Account Details', 'wp-whatsapp-multi-chat'),
+      __('Detalhes da Conta', 'wp-whatsapp-multi-chat'),
       array($this, 'render_account_meta_box'),
       self::POST_TYPE_SLUG,
       'normal'
@@ -91,20 +91,20 @@ class WP_WhatsApp_Multi_Chat_Accounts
     $predefined_message = get_post_meta($post->ID, '_wpwc_predefined_message', true);
 ?>
     <div class="wpwc-meta-field">
-      <label for="wpwc_name" class="wpwc-meta-label"><?php esc_html_e('Name', 'wp-whatsapp-multi-chat'); ?></label>
-      <input type="text" id="wpwc_name" name="wpwc_name" value="<?php echo esc_attr($name); ?>" placeholder="<?php esc_attr_e('e.g., Support', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
+      <label for="wpwc_name" class="wpwc-meta-label"><?php esc_html_e('Nome', 'wp-whatsapp-multi-chat'); ?></label>
+      <input type="text" id="wpwc_name" name="wpwc_name" value="<?php echo esc_attr($name); ?>" placeholder="<?php esc_attr_e('ex.: Suporte', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
     </div>
 
     <div class="wpwc-meta-field">
-      <label for="wpwc_number" class="wpwc-meta-label"><?php esc_html_e('Phone Number', 'wp-whatsapp-multi-chat'); ?></label>
-      <input type="text" id="wpwc_number" name="wpwc_number" value="<?php echo esc_attr($number); ?>" placeholder="<?php esc_attr_e('e.g., 5511912341234', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
-      <small class="wpwc-meta-hint"><?php esc_html_e('Include country code and area code', 'wp-whatsapp-multi-chat'); ?></small>
+      <label for="wpwc_number" class="wpwc-meta-label"><?php esc_html_e('Número de Telefone', 'wp-whatsapp-multi-chat'); ?></label>
+      <input type="text" id="wpwc_number" name="wpwc_number" value="<?php echo esc_attr($number); ?>" placeholder="<?php esc_attr_e('ex.: 5511912341234', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
+      <small class="wpwc-meta-hint"><?php esc_html_e('Inclua o código do país e o DDD', 'wp-whatsapp-multi-chat'); ?></small>
     </div>
 
     <div class="wpwc-meta-field">
-      <label for="wpwc_predefined_message" class="wpwc-meta-label"><?php esc_html_e('Predefined Message', 'wp-whatsapp-multi-chat'); ?></label>
-      <textarea id="wpwc_predefined_message" name="wpwc_predefined_message" rows="4" placeholder="<?php esc_attr_e('e.g., Hello, I came through the website and would like a quote.', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-textarea"><?php echo esc_textarea($predefined_message); ?></textarea>
-      <small class="wpwc-meta-hint"><?php esc_html_e('This message will be pre-filled in the WhatsApp chat', 'wp-whatsapp-multi-chat'); ?></small>
+      <label for="wpwc_predefined_message" class="wpwc-meta-label"><?php esc_html_e('Mensagem Predefinida', 'wp-whatsapp-multi-chat'); ?></label>
+      <textarea id="wpwc_predefined_message" name="wpwc_predefined_message" rows="4" placeholder="<?php esc_attr_e('ex.: Olá, vim pelo site e gostaria de um orçamento.', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-textarea"><?php echo esc_textarea($predefined_message); ?></textarea>
+      <small class="wpwc-meta-hint"><?php esc_html_e('Esta mensagem será pré-preenchida no chat do WhatsApp', 'wp-whatsapp-multi-chat'); ?></small>
     </div>
 <?php
   }
@@ -136,9 +136,9 @@ class WP_WhatsApp_Multi_Chat_Accounts
   public function account_tabulation_header($defaults)
   {
     unset($defaults['date']);
-    $defaults['title']   = esc_html__('Name', 'wp-whatsapp-multi-chat');
-    $defaults['picture'] = esc_html__('Picture', 'wp-whatsapp-multi-chat');
-    $defaults['number']  = esc_html__('Number', 'wp-whatsapp-multi-chat');
+    $defaults['title']   = esc_html__('Nome', 'wp-whatsapp-multi-chat');
+    $defaults['picture'] = esc_html__('Foto', 'wp-whatsapp-multi-chat');
+    $defaults['number']  = esc_html__('Número', 'wp-whatsapp-multi-chat');
     return $defaults;
   }
 
