@@ -5,6 +5,10 @@ O **WhatsApp Multi Chat** é um plugin para WordPress que adiciona um botão flu
 É a solução ideal para empresas que possuem múltiplos atendentes ou departamentos e desejam centralizar o contato via WhatsApp em um único widget no site.
 
 ---
+## Instalação
+Faça download da versão mais recente na seção de [releases](https://github.com/estevan-ulian/wp-whatsapp-multi-chat/releases), instale e ative-o em seu site WordPress.
+
+---
 
 ## Funcionalidades
 - **Múltiplas contas:** cadastre diversos atendentes/departamentos com seus respectivos números de WhatsApp.
