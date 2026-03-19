@@ -14,7 +14,11 @@
         "brain/monkey": "^2.7"
     },
     "scripts": {
-        "build": "php Build.php",
+        "build:frontend": "cd frontend && npm run build",
+        "build": [
+            "@build:frontend",
+            "php Build.php"
+        ],
         "test": "vendor/bin/phpunit"
     }
 }
