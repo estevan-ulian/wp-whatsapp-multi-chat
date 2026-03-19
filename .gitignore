@@ -1,4 +1,5 @@
 .DS_Store
 .phpunit.cache
+build
 vendor
 assets/frontend
