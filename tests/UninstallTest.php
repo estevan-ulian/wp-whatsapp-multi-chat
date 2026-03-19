@@ -21,6 +21,11 @@ class UninstallTest extends WPWC_TestCase
     Functions\stubTranslationFunctions();
     Functions\stubEscapeFunctions();
 
+    Functions\expect('get_option')
+      ->once()
+      ->with('wpwc_misc', \Mockery::any())
+      ->andReturn(['delete_on_uninstall' => true]);
+
     Functions\expect('delete_option')
       ->once()
       ->with('wpwc_display_conditions');
@@ -28,6 +33,10 @@ class UninstallTest extends WPWC_TestCase
     Functions\expect('delete_option')
       ->once()
       ->with('wpwc_appearance');
+
+    Functions\expect('delete_option')
+      ->once()
+      ->with('wpwc_misc');
 
     Functions\expect('get_posts')
       ->once()
