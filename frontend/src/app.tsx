@@ -172,7 +172,7 @@ export function App() {
         aria-expanded={isOpen}
       >
         <AnimatePresence mode="wait" initial={false}>
-          {isOpen ? (
+          {isOpen && appearance.button_style !== 'icon-text' ? (
             <motion.span
               key="close"
               class="wpwc-btn-icon"
@@ -196,7 +196,7 @@ export function App() {
             </motion.span>
           )}
         </AnimatePresence>
-        {appearance.button_style === 'icon-text' && !isOpen && (
+        {appearance.button_style === 'icon-text' && (
           <span class="wpwc-btn-text">{appearance.button_text}</span>
         )}
       </button>
