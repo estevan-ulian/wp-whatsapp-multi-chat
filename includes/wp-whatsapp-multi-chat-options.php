@@ -20,6 +20,7 @@ class WP_WhatsApp_Multi_Chat_Options
     add_action('admin_post_wpwc_save_display_conditions', array($this, 'save_display_conditions'));
     add_action('admin_post_wpwc_save_appearance', array($this, 'save_appearance'));
     add_action('admin_post_wpwc_save_misc', array($this, 'save_misc'));
+    add_action('admin_post_wpwc_reset_all', array($this, 'reset_all'));
   }
 
   public function add_options_page()
@@ -54,10 +55,11 @@ class WP_WhatsApp_Multi_Chat_Options
     );
 
     wp_localize_script('wpwc-admin-options', 'wpwcOptions', array(
-      'ajaxUrl'       => admin_url('admin-ajax.php'),
-      'nonce'         => wp_create_nonce('wpwc_search_posts'),
-      'noResults'     => __('Nenhum resultado encontrado', 'wp-whatsapp-multi-chat'),
-      'removeLabel'   => __('Remover', 'wp-whatsapp-multi-chat'),
+      'ajaxUrl'          => admin_url('admin-ajax.php'),
+      'nonce'            => wp_create_nonce('wpwc_search_posts'),
+      'noResults'        => __('Nenhum resultado encontrado', 'wp-whatsapp-multi-chat'),
+      'removeLabel'      => __('Remover', 'wp-whatsapp-multi-chat'),
+      'resetConfirmText' => __('Tem certeza? Esta ação é irreversível e apagará todos os dados do plugin.', 'wp-whatsapp-multi-chat'),
     ));
   }
 
@@ -102,10 +104,16 @@ class WP_WhatsApp_Multi_Chat_Options
     <div class="wrap wpwc-options-page">
       <h1><?php esc_html_e('WhatsApp Multi Chat', 'wp-whatsapp-multi-chat'); ?></h1>
 
-      <?php if (isset($_GET['updated']) && '1' === $_GET['updated']) : ?>
-        <div class="notice notice-success is-dismissible">
-          <p><?php esc_html_e('Configurações salvas.', 'wp-whatsapp-multi-chat'); ?></p>
-        </div>
+      <?php if (isset($_GET['updated'])) : ?>
+        <?php if ('reset' === $_GET['updated']) : ?>
+          <div class="notice notice-warning is-dismissible">
+            <p><?php esc_html_e('Plugin resetado. Todos os dados foram apagados e as configurações foram restauradas ao padrão.', 'wp-whatsapp-multi-chat'); ?></p>
+          </div>
+        <?php elseif ('1' === $_GET['updated']) : ?>
+          <div class="notice notice-success is-dismissible">
+            <p><?php esc_html_e('Configurações salvas.', 'wp-whatsapp-multi-chat'); ?></p>
+          </div>
+        <?php endif; ?>
       <?php endif; ?>
 
       <nav class="nav-tab-wrapper">
@@ -680,6 +688,77 @@ class WP_WhatsApp_Multi_Chat_Options
 
       <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
     </form>
+
+    <!-- ── Reset ───────────────────────────────────────────────────── -->
+    <div class="wpwc-section wpwc-section-danger">
+      <h2 class="wpwc-section-title wpwc-section-title-danger"><?php esc_html_e('Resetar Plugin', 'wp-whatsapp-multi-chat'); ?></h2>
+
+      <p class="wpwc-danger-description">
+        <?php esc_html_e('Selecione o que deseja resetar. As ações marcadas são irreversíveis:', 'wp-whatsapp-multi-chat'); ?>
+      </p>
+
+      <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="wpwc-reset-form">
+        <?php wp_nonce_field('wpwc_reset_all', 'wpwc_reset_nonce'); ?>
+        <input type="hidden" name="action" value="wpwc_reset_all">
+
+        <label class="wpwc-reset-select-all">
+          <input type="checkbox" id="wpwc-reset-select-all">
+          <?php esc_html_e('Selecionar tudo', 'wp-whatsapp-multi-chat'); ?>
+        </label>
+
+        <ul class="wpwc-reset-list">
+          <li>
+            <label class="wpwc-reset-item">
+              <input type="checkbox" name="wpwc_reset[]" value="accounts">
+              <span class="wpwc-reset-item-body">
+                <strong><?php esc_html_e('Apagar todas as contas', 'wp-whatsapp-multi-chat'); ?></strong>
+                <span class="wpwc-reset-list-desc"><?php esc_html_e('Todos os contatos do WhatsApp cadastrados serão removidos permanentemente.', 'wp-whatsapp-multi-chat'); ?></span>
+              </span>
+            </label>
+          </li>
+          <li>
+            <label class="wpwc-reset-item">
+              <input type="checkbox" name="wpwc_reset[]" value="appearance">
+              <span class="wpwc-reset-item-body">
+                <strong><?php esc_html_e('Redefinir aparência', 'wp-whatsapp-multi-chat'); ?></strong>
+                <span class="wpwc-reset-list-desc"><?php esc_html_e('Cores, posição, tamanho do botão e animação voltarão ao padrão.', 'wp-whatsapp-multi-chat'); ?></span>
+              </span>
+            </label>
+          </li>
+          <li>
+            <label class="wpwc-reset-item">
+              <input type="checkbox" name="wpwc_reset[]" value="texts">
+              <span class="wpwc-reset-item-body">
+                <strong><?php esc_html_e('Redefinir textos do widget', 'wp-whatsapp-multi-chat'); ?></strong>
+                <span class="wpwc-reset-list-desc"><?php esc_html_e('Título, subtítulo, CTA, mensagens de rodapé e textos de acessibilidade serão restaurados.', 'wp-whatsapp-multi-chat'); ?></span>
+              </span>
+            </label>
+          </li>
+          <li>
+            <label class="wpwc-reset-item">
+              <input type="checkbox" name="wpwc_reset[]" value="display_conditions">
+              <span class="wpwc-reset-item-body">
+                <strong><?php esc_html_e('Redefinir condições de exibição', 'wp-whatsapp-multi-chat'); ?></strong>
+                <span class="wpwc-reset-list-desc"><?php esc_html_e('Regras de onde o widget é exibido (páginas, tipos de post, arquivos) serão removidas.', 'wp-whatsapp-multi-chat'); ?></span>
+              </span>
+            </label>
+          </li>
+          <li>
+            <label class="wpwc-reset-item">
+              <input type="checkbox" name="wpwc_reset[]" value="misc">
+              <span class="wpwc-reset-item-body">
+                <strong><?php esc_html_e('Redefinir configurações diversas', 'wp-whatsapp-multi-chat'); ?></strong>
+                <span class="wpwc-reset-list-desc"><?php esc_html_e('Opções da aba &ldquo;Diversas&rdquo; (como remoção de dados ao desinstalar) serão restauradas ao padrão.', 'wp-whatsapp-multi-chat'); ?></span>
+              </span>
+            </label>
+          </li>
+        </ul>
+
+        <button type="submit" class="button wpwc-reset-button" disabled>
+          <?php esc_html_e('Resetar selecionados', 'wp-whatsapp-multi-chat'); ?>
+        </button>
+      </form>
+    </div>
     <?php
   }
 
@@ -700,6 +779,91 @@ class WP_WhatsApp_Multi_Chat_Options
     $redirect = admin_url(
       'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
       . '&page=wp-whatsapp-multi-chat-options&tab=misc&updated=1'
+    );
+
+    wp_safe_redirect($redirect);
+    exit;
+  }
+
+  public function reset_all()
+  {
+    check_admin_referer('wpwc_reset_all', 'wpwc_reset_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
+    }
+
+    $to_reset = isset($_POST['wpwc_reset'])
+      ? array_map('sanitize_key', (array) wp_unslash($_POST['wpwc_reset']))
+      : array();
+
+    if (empty($to_reset)) {
+      wp_safe_redirect(admin_url(
+        'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
+        . '&page=wp-whatsapp-multi-chat-options&tab=misc'
+      ));
+      exit;
+    }
+
+    if (in_array('accounts', $to_reset, true)) {
+      $posts = get_posts(array(
+        'post_type'        => WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG,
+        'post_status'      => 'any',
+        'numberposts'      => -1,
+        'fields'           => 'ids',
+        'suppress_filters' => false,
+      ));
+      foreach ($posts as $post_id) {
+        wp_delete_post((int) $post_id, true);
+      }
+    }
+
+    if (in_array('appearance', $to_reset, true) || in_array('texts', $to_reset, true)) {
+      // Both appearance and texts are stored in the same option key; replace with
+      // only the defaults of the sub-set the user chose to reset.
+      $current = get_option(self::APPEARANCE_OPTION_KEY, array());
+      $defaults = self::appearance_defaults();
+
+      $appearance_keys = array(
+        'position_corner', 'offset_x', 'offset_y',
+        'button_style', 'button_size',
+        'color_bg', 'color_fg',
+        'animation', 'appear_delay',
+        'hide_mobile', 'hide_desktop',
+      );
+      $text_keys = array(
+        'button_text', 'tooltip_text',
+        'panel_title', 'panel_subtitle',
+        'cta_text', 'empty_text', 'footer_text',
+        'aria_open', 'aria_panel',
+      );
+
+      $keys_to_reset = array();
+      if (in_array('appearance', $to_reset, true)) {
+        $keys_to_reset = array_merge($keys_to_reset, $appearance_keys);
+      }
+      if (in_array('texts', $to_reset, true)) {
+        $keys_to_reset = array_merge($keys_to_reset, $text_keys);
+      }
+
+      foreach ($keys_to_reset as $key) {
+        $current[$key] = $defaults[$key];
+      }
+
+      update_option(self::APPEARANCE_OPTION_KEY, $current);
+    }
+
+    if (in_array('display_conditions', $to_reset, true)) {
+      delete_option(self::OPTION_KEY);
+    }
+
+    if (in_array('misc', $to_reset, true)) {
+      delete_option(self::MISC_OPTION_KEY);
+    }
+
+    $redirect = admin_url(
+      'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
+      . '&page=wp-whatsapp-multi-chat-options&tab=misc&updated=reset'
     );
 
     wp_safe_redirect($redirect);
