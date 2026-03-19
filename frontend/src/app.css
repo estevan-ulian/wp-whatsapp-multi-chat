@@ -27,7 +27,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border: none;
+  border: none !important;
+  padding: 0 !important;
   cursor: pointer;
   box-shadow:
     0 4px 12px rgba(0, 0, 0, .20),
@@ -48,15 +49,15 @@
 .wpwc-btn:active { transform: scale(0.94); }
 
 /* Sizes – circular */
-.wpwc-btn--small  { width: 44px; height: 44px; border-radius: 50%; }
-.wpwc-btn--medium { width: 56px; height: 56px; border-radius: 50%; }
-.wpwc-btn--large  { width: 68px; height: 68px; border-radius: 50%; }
+.wpwc-btn--small  { width: 44px; height: 44px; border-radius: 999px !important; }
+.wpwc-btn--medium { width: 56px; height: 56px; border-radius: 999px !important; }
+.wpwc-btn--large  { width: 68px; height: 68px; border-radius: 999px !important; }
 
 /* Pill (icon + text) */
-.wpwc-btn--pill { border-radius: 100px; width: auto; }
-.wpwc-btn--pill.wpwc-btn--small  { height: 44px; padding: 0 20px 0 14px; }
-.wpwc-btn--pill.wpwc-btn--medium { height: 56px; padding: 0 24px 0 18px; }
-.wpwc-btn--pill.wpwc-btn--large  { height: 68px; padding: 0 28px 0 20px; }
+.wpwc-btn--pill { border-radius: 999px; width: auto; }
+.wpwc-btn--pill.wpwc-btn--small  { height: 44px; padding: 0 20px 0 14px !important; }
+.wpwc-btn--pill.wpwc-btn--medium { height: 56px; padding: 0 24px 0 18px !important; }
+.wpwc-btn--pill.wpwc-btn--large  { height: 68px; padding: 0 28px 0 20px !important; }
 
 .wpwc-btn-text {
   font-size: 14px;
@@ -303,7 +304,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
   overflow: hidden;
 }
 
