@@ -3,6 +3,7 @@ export interface Account {
   name: string;
   number: string;
   predefined_message: string;
+  tagline: string;
   thumbnail: string;
 }
 

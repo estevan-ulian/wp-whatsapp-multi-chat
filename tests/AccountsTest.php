@@ -163,6 +163,10 @@ class AccountsTest extends WPWC_TestCase
 
     Functions\expect('update_post_meta')
       ->once()
+      ->with(42, '_wpwc_cargo', 'Suporte');
+
+    Functions\expect('update_post_meta')
+      ->once()
       ->with(42, '_wpwc_number', '5511912341234');
 
     Functions\expect('update_post_meta')
@@ -172,6 +176,7 @@ class AccountsTest extends WPWC_TestCase
     $_POST = [
       'wpwc_account_nonce'      => 'valid_nonce',
       'wpwc_name'               => 'Support',
+      'wpwc_cargo'              => 'Suporte',
       'wpwc_number'             => '55-11-91234-1234',
       'wpwc_predefined_message' => 'Hello',
     ];
@@ -206,9 +211,10 @@ class AccountsTest extends WPWC_TestCase
       });
 
     $_POST = [
-      'wpwc_account_nonce' => 'valid',
-      'wpwc_name'          => 'Test',
-      'wpwc_number'        => '+55 (11) 91234-1234',
+      'wpwc_account_nonce'      => 'valid',
+      'wpwc_name'               => 'Test',
+      'wpwc_cargo'              => '',
+      'wpwc_number'             => '+55 (11) 91234-1234',
       'wpwc_predefined_message' => '',
     ];
 

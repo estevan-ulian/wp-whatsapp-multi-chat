@@ -19,6 +19,9 @@
         <!-- Agent name may differ per language (e.g. localised department name) -->
         <custom-field action="translate">_wpwc_name</custom-field>
 
+        <!-- Role/position label shown above the name in the widget; translate per language -->
+        <custom-field action="translate">_wpwc_cargo</custom-field>
+
         <!-- Phone number is typically the same across languages; copy to all translations -->
         <custom-field action="copy">_wpwc_number</custom-field>
 

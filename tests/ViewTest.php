@@ -70,6 +70,7 @@ class ViewTest extends WPWC_TestCase
           '_wpwc_name'               => 'Support',
           '_wpwc_number'             => '5511912341234',
           '_wpwc_predefined_message' => 'Hello',
+          '_wpwc_cargo'              => 'Suporte',
         ];
         return $map[$key] ?? '';
       });
@@ -87,6 +88,7 @@ class ViewTest extends WPWC_TestCase
     $this->assertSame('Support', $result[0]['name']);
     $this->assertSame('5511912341234', $result[0]['number']);
     $this->assertSame('Hello', $result[0]['predefined_message']);
+    $this->assertSame('Suporte', $result[0]['tagline']);
     $this->assertSame('https://example.com/image.jpg', $result[0]['thumbnail']);
   }
 

@@ -87,12 +87,19 @@ class WP_WhatsApp_Multi_Chat_Accounts
     wp_nonce_field('wpwc_save_account_' . $post->ID, 'wpwc_account_nonce');
 
     $name = get_post_meta($post->ID, '_wpwc_name', true);
+    $cargo = get_post_meta($post->ID, '_wpwc_cargo', true);
     $number = get_post_meta($post->ID, '_wpwc_number', true);
     $predefined_message = get_post_meta($post->ID, '_wpwc_predefined_message', true);
 ?>
     <div class="wpwc-meta-field">
       <label for="wpwc_name" class="wpwc-meta-label"><?php esc_html_e('Nome', 'wp-whatsapp-multi-chat'); ?></label>
       <input type="text" id="wpwc_name" name="wpwc_name" value="<?php echo esc_attr($name); ?>" placeholder="<?php esc_attr_e('ex.: Suporte', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
+    </div>
+
+    <div class="wpwc-meta-field">
+      <label for="wpwc_cargo" class="wpwc-meta-label"><?php esc_html_e('Cargo', 'wp-whatsapp-multi-chat'); ?></label>
+      <input type="text" id="wpwc_cargo" name="wpwc_cargo" value="<?php echo esc_attr($cargo); ?>" placeholder="<?php esc_attr_e('ex.: Suporte, Vendas, Financeiro', 'wp-whatsapp-multi-chat'); ?>" class="wpwc-meta-input">
+      <small class="wpwc-meta-hint"><?php esc_html_e('Exibido acima do nome no widget do WhatsApp', 'wp-whatsapp-multi-chat'); ?></small>
     </div>
 
     <div class="wpwc-meta-field">
@@ -121,6 +128,10 @@ class WP_WhatsApp_Multi_Chat_Accounts
 
     if (isset($_POST['wpwc_name'])) {
       update_post_meta($post_id, '_wpwc_name', sanitize_text_field(wp_unslash($_POST['wpwc_name'])));
+    }
+
+    if (isset($_POST['wpwc_cargo'])) {
+      update_post_meta($post_id, '_wpwc_cargo', sanitize_text_field(wp_unslash($_POST['wpwc_cargo'])));
     }
 
     if (isset($_POST['wpwc_number'])) {
