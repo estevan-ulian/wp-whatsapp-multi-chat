@@ -41,31 +41,18 @@ jobs:
           php-version: '8.4'
           tools: composer:v2
 
-      - name: Install production PHP dependencies
-        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Build frontend assets
-        working-directory: frontend
+      # Same script as the local `composer build`, so the released zip matches
+      # the one tested locally.
+      - name: Build plugin zip
         run: |
-          npm ci
-          npm run build
-
-      # WordPress installs the update into the zip's root folder, so it must be
-      # exactly the plugin slug to replace the existing install in place.
-      - name: Package plugin
-        run: |
-          mkdir -p "dist/$SLUG"
-          rsync -a --exclude-from=.distignore ./ "dist/$SLUG/"
-          test -f "dist/$SLUG/vendor/autoload.php" || { echo "::error::vendor/autoload.php missing from package"; exit 1; }
-          test -f "dist/$SLUG/assets/frontend/js/wp-whatsapp-multi-chat-plugin.js" || { echo "::error::frontend build missing from package"; exit 1; }
-          (cd dist && zip -rq "$SLUG.zip" "$SLUG")
-          unzip -l "dist/$SLUG.zip"
+          composer build
+          unzip -l "build/$SLUG.zip"
 
       # The release body is what sites show under "View details", so it opens
       # with this version's CHANGELOG.md section, followed by GitHub's notes.
@@ -76,13 +63,13 @@ jobs:
             index($0, "## [" v "]") == 1 { found = 1; next }
             found && /^## \[/ { exit }
             found { print }
-          ' CHANGELOG.md > dist/release-notes.md
-          if [ ! -s dist/release-notes.md ]; then
+          ' CHANGELOG.md > build/release-notes.md
+          if [ ! -s build/release-notes.md ]; then
             echo "::warning::CHANGELOG.md has no '## [$VERSION]' section; the release will only carry GitHub's generated notes."
           fi
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/${{ env.SLUG }}.zip
-          body_path: dist/release-notes.md
+          files: build/${{ env.SLUG }}.zip
+          body_path: build/release-notes.md
           generate_release_notes: true
