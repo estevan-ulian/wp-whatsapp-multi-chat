@@ -1,0 +1,88 @@
+name: Release
+
+# Pushing a vX.Y.Z tag publishes the installable zip that sites download through
+# the WordPress "Update now" button (via Plugin Update Checker).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  SLUG: wp-whatsapp-multi-chat
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sites compare the installed Version header with the release, so a tag
+      # that disagrees with the code would announce an update that never applies.
+      - name: Validate tag matches plugin version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          HEADER_VERSION="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:' "$SLUG.php" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')"
+          CONST_VERSION="$(grep -m1 "WP_WHATSAPP_MULTI_CHAT_VERSION'," "$SLUG.php" | sed -E "s/.*'WP_WHATSAPP_MULTI_CHAT_VERSION',[[:space:]]*'([^']+)'.*/\1/")"
+          echo "Tag: $TAG_VERSION | Version header: $HEADER_VERSION | WP_WHATSAPP_MULTI_CHAT_VERSION: $CONST_VERSION"
+          if [ "$TAG_VERSION" != "$HEADER_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match 'Version: $HEADER_VERSION' in $SLUG.php. Bump the version, commit, and tag v$HEADER_VERSION (or fix the header)."
+            exit 1
+          fi
+          if [ "$HEADER_VERSION" != "$CONST_VERSION" ]; then
+            echo "::error::WP_WHATSAPP_MULTI_CHAT_VERSION ($CONST_VERSION) differs from 'Version: $HEADER_VERSION' in $SLUG.php. Keep both equal."
+            exit 1
+          fi
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install production PHP dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend assets
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      # WordPress installs the update into the zip's root folder, so it must be
+      # exactly the plugin slug to replace the existing install in place.
+      - name: Package plugin
+        run: |
+          mkdir -p "dist/$SLUG"
+          rsync -a --exclude-from=.distignore ./ "dist/$SLUG/"
+          test -f "dist/$SLUG/vendor/autoload.php" || { echo "::error::vendor/autoload.php missing from package"; exit 1; }
+          test -f "dist/$SLUG/assets/frontend/js/wp-whatsapp-multi-chat-plugin.js" || { echo "::error::frontend build missing from package"; exit 1; }
+          (cd dist && zip -rq "$SLUG.zip" "$SLUG")
+          unzip -l "dist/$SLUG.zip"
+
+      # The release body is what sites show under "View details", so it opens
+      # with this version's CHANGELOG.md section, followed by GitHub's notes.
+      - name: Extract changelog section
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > dist/release-notes.md
+          if [ ! -s dist/release-notes.md ]; then
+            echo "::warning::CHANGELOG.md has no '## [$VERSION]' section; the release will only carry GitHub's generated notes."
+          fi
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ env.SLUG }}.zip
+          body_path: dist/release-notes.md
+          generate_release_notes: true

@@ -3,13 +3,14 @@
 /**
  * Plugin Name: WhatsApp Multi Chat
  * Description: A simple WhatsApp chat plugin for WordPress.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Estevan Ulian
  * Author URI: https://github.com/estevan-ulian
  * Plugin URI: https://github.com/estevan-ulian/wp-whatsapp-multi-chat
+ * Update URI: https://github.com/estevan-ulian/wp-whatsapp-multi-chat
  * Text Domain: wp-whatsapp-multi-chat
  * Requires at least: 5.0
- * Requires PHP: 7.2
+ * Requires PHP: 8.4.27
  * License: GPL-3.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
@@ -17,7 +18,7 @@
 if (!defined('ABSPATH')) exit;
 
 if (!defined('WP_WHATSAPP_MULTI_CHAT_VERSION')) {
-  define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.0.0');
+  define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.1.0');
 }
 
 if (!defined('WP_WHATSAPP_MULTI_CHAT_PLUGIN_FILE')) {
@@ -58,6 +59,7 @@ class WP_WhatsApp_Multi_Chat_Plugin
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-accounts.php';
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-options.php';
     require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-view.php';
+    require_once WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR . 'includes/wp-whatsapp-multi-chat-updater.php';
   }
 
   private function init_classes()
@@ -65,6 +67,7 @@ class WP_WhatsApp_Multi_Chat_Plugin
     WP_WhatsApp_Multi_Chat_Accounts::get_instance();
     WP_WhatsApp_Multi_Chat_Options::get_instance();
     WP_WhatsApp_Multi_Chat_View::get_instance();
+    WP_WhatsApp_Multi_Chat_Updater::get_instance();
   }
 
   public static function get_instance()
