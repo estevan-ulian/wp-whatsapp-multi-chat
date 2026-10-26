@@ -34,7 +34,7 @@ O plugin foi desenvolvido estruturando o back-end (PHP) e o front-end (React/Pre
 
 - **Testes e Build:**
   - `phpunit.xml` / `composer.json` provêm ferramentas de qualidade de código.
-  - Script PHP customizado (`Build.php`) gerencia as automações de compilação.
+  - O script `bin/build.sh` gera o pacote instalável (`composer build`). A pipeline de release usa o mesmo script.
 
 ---
 
@@ -53,9 +53,10 @@ wp-whatsapp-multi-chat/
 │   └── frontend/              # Output do build do Preact (Arquivos injetados no frontend do WP)
 ├── languages/                 # Arquivos de tradução (.po, .mo, .pot)
 ├── tests/                     # Testes Unitários PHP (PHPUnit)
-├── vendor/                    # Dependências instaladas pelo Composer (PHPUnit, Mockery, etc.)
-├── build-config.json          # Configuração do build
-└── Build.php                  # Script de automação do build do projeto
+├── vendor/                    # Dependências do Composer (Plugin Update Checker; PHPUnit e Brain Monkey em dev)
+├── bin/build.sh               # Gera o zip instalável do plugin (local e na pipeline de release)
+├── .distignore                # Arquivos que ficam fora do zip instalável
+└── .github/workflows/         # Pipeline de release (publica o zip nas releases do GitHub)
 ```
 
 ---
@@ -90,10 +91,15 @@ cd /frontend && npm run build
 ```
 
 #### Plugin Completo
-Para gerar o build completo do plugin (PHP + Frontend), execute o script PHP customizado na raiz do projeto:
+Para gerar o zip instalável (frontend compilado + dependências PHP de produção), execute na raiz do projeto:
 ```bash
 composer build
 ```
+O arquivo é gerado em `build/wp-whatsapp-multi-chat.zip`, com a pasta raiz `wp-whatsapp-multi-chat/`. É o mesmo pacote que a pipeline publica nas releases, então dá para testar localmente exatamente o que os sites vão instalar.
+
+- O conteúdo do zip é tudo que não estiver listado no `.distignore`. Ao criar um arquivo de desenvolvimento na raiz do projeto, adicione-o ao `.distignore` para que ele não vá para os sites.
+- As dependências de produção são instaladas numa cópia temporária, então o `vendor/` do projeto (com o PHPUnit) não é alterado.
+- Requer `bash`, `rsync` e `zip` (já presentes no macOS e no Linux; no Windows, use WSL ou Git Bash).
 
 ---
 

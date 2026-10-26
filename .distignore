@@ -5,13 +5,11 @@
 /.gitignore
 /.distignore
 /.phpunit.cache
+/bin
 /build
-/dist
 /frontend
 /tests
 /phpunit.xml
-/Build.php
-/build-config.json
 /composer.json
 /composer.lock
 /assets/frontend/index.html

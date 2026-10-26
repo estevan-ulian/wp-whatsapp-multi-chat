@@ -7,18 +7,12 @@
         }
     ],
     "require-dev": {
-        "symfony/filesystem": "^7.3",
-        "symfony/finder": "^7.3",
-        "symfony/console": "^7.3",
         "phpunit/phpunit": "^13.0",
         "brain/monkey": "^2.7"
     },
     "scripts": {
         "build:frontend": "cd frontend && npm run build",
-        "build": [
-            "@build:frontend",
-            "php Build.php"
-        ],
+        "build": "bash bin/build.sh",
         "test": "vendor/bin/phpunit"
     },
     "require": {
