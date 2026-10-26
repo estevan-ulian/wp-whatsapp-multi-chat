@@ -97,5 +97,47 @@ composer build
 
 ---
 
+## Atualizações automáticas
+
+Os sites que usam o plugin recebem o aviso de nova versão e o botão **"Atualizar agora"** no painel do WordPress, como um plugin do wordpress.org. As versões vêm das [releases do GitHub](https://github.com/estevan-ulian/wp-whatsapp-multi-chat/releases), por meio da biblioteca [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker).
+
+- O WordPress verifica novas versões automaticamente a cada 12 horas. Para verificar na hora, use o link **"Check for updates"** na linha do plugin, na tela **Plugins**.
+- O site instala o arquivo `wp-whatsapp-multi-chat.zip` anexado à release, que já traz os assets compilados e as dependências. O zip de código-fonte gerado pelo GitHub não serve, porque não tem nenhum dos dois.
+- Sites com a versão 1.0.0 ainda não têm o atualizador. Por isso precisam instalar manualmente, uma única vez, a primeira versão que o inclui. Depois disso as atualizações chegam pelo painel.
+
+### Como publicar uma nova versão
+
+1. Registre as mudanças no `CHANGELOG.md`, em uma seção `## [X.Y.Z]`. Esse texto aparece em "Ver detalhes" no painel dos sites.
+2. Atualize a versão em `wp-whatsapp-multi-chat.php`, **nos dois lugares**, com o mesmo valor:
+   - no cabeçalho: ` * Version: X.Y.Z`
+   - na constante: `define('WP_WHATSAPP_MULTI_CHAT_VERSION', 'X.Y.Z');`
+3. Faça o commit e envie para a `main`:
+   ```bash
+   git commit -am "chore: release vX.Y.Z"
+   git push origin main
+   ```
+4. Crie a tag e envie:
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+O workflow `.github/workflows/release.yml` gera o pacote e publica a release com o zip anexado. O job **falha** se a tag (sem o `v`), o cabeçalho `Version:` e a constante não forem iguais. Isso evita anunciar aos sites uma versão que o código não tem. Se a tag foi criada com a versão errada, corrija o arquivo e recrie a tag:
+```bash
+git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z
+```
+
+### Se o repositório se tornar privado
+
+Cada site precisa de um token para baixar as releases. Adicione ao `wp-config.php` do site (nunca ao repositório):
+
+```php
+define('WP_WHATSAPP_MULTI_CHAT_GITHUB_TOKEN', 'github_pat_...');
+```
+
+Use um token **fine-grained**, restrito apenas a este repositório, com a permissão **Contents: Read-only** e mais nenhuma. Assim, um token que vaze de um site só permite ler este plugin.
+
+---
+
 ## Internacionalização
 O plugin está pronto para tradução e compatível com **WPML**. Os arquivos de linguagem (`.pot`) estão no diretório `/languages/`. Utilize ferramentas como Poedit, Loco Translate ou WPML para traduzi-lo para idiomas adicionais.

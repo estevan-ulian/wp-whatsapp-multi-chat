@@ -1,0 +1,20 @@
+# Files kept out of the release zip installed on sites (rsync exclude syntax).
+# Only runtime files belong in the package; sources, tooling and tests stay out.
+/.git
+/.github
+/.gitignore
+/.distignore
+/.phpunit.cache
+/build
+/dist
+/frontend
+/tests
+/phpunit.xml
+/Build.php
+/build-config.json
+/composer.json
+/composer.lock
+/assets/frontend/index.html
+node_modules
+.DS_Store
+*.zip
