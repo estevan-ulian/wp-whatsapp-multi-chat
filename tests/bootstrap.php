@@ -10,3 +10,4 @@ define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_DIR', dirname(__DIR__) . '/');
 define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp-whatsapp-multi-chat/');
 
 require_once dirname(__DIR__) . '/includes/wp-whatsapp-multi-chat-utils.php';
+require_once dirname(__DIR__) . '/includes/wp-whatsapp-multi-chat-hours.php';
