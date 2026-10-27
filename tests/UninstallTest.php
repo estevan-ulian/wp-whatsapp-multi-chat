@@ -38,6 +38,10 @@ class UninstallTest extends WPWC_TestCase
       ->once()
       ->with('wpwc_misc');
 
+    Functions\expect('delete_option')
+      ->once()
+      ->with('wpwc_hours');
+
     Functions\expect('get_posts')
       ->once()
       ->with(\Mockery::on(function ($args) {

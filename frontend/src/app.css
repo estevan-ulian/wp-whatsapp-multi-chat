@@ -292,6 +292,10 @@
   border: 2px solid #fff;
 }
 
+.wpwc-contact-avatar-dot--offline {
+  background: #9ca3af;
+}
+
 .wpwc-contact-avatar-img {
   width: 100%;
   height: 100%;
@@ -322,6 +326,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.wpwc-contact-status {
+  font-size: 12px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wpwc-contact-status--online {
+  color: #16a34a;
+}
+
+.wpwc-contact-status--offline {
+  color: #6b7280;
+}
+
+/* Shown on the floating button only when every account is outside business hours */
+.wpwc-btn-status {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #9ca3af;
+  border: 2px solid #fff;
+  pointer-events: none;
 }
 
 .wpwc-contact-cta {

@@ -15,6 +15,7 @@ Faça download da versão mais recente na seção de [releases](https://github.c
 - **Botão flutuante personalizável:** configure cores, textos e a aparência do botão flutuante para combinar com a identidade visual do site.
 - **Janela de atendimento:** exibição amigável e moderna dos contatos cadastrados ao clicar no botão.
 - **Painel de opções (Admin):** interface intuitiva no admin do WordPress para gerenciar as configurações, contas e design.
+- **Horários de funcionamento:** horário geral e horário próprio por conta; o widget mostra quem está online agora e quando cada atendente volta, no fuso do site.
 - **Suporte multilíngue (WPML):** integração e arquivos `.po`/`.mo` para tradução de strings.
 
 ---

@@ -11,6 +11,7 @@ if (empty($misc['delete_on_uninstall'])) {
 delete_option('wpwc_display_conditions');
 delete_option('wpwc_appearance');
 delete_option('wpwc_misc');
+delete_option('wpwc_hours');
 
 $posts = get_posts(array(
   'post_type'   => 'wpwc_account',

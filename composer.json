@@ -13,7 +13,8 @@
     "scripts": {
         "build:frontend": "cd frontend && npm run build",
         "build": "bash bin/build.sh",
-        "test": "vendor/bin/phpunit"
+        "test": "vendor/bin/phpunit",
+        "test:frontend": "cd frontend && npm test"
     },
     "require": {
         "yahnis-elsts/plugin-update-checker": "^5"

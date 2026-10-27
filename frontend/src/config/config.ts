@@ -1,3 +1,5 @@
+import type { Availability, DayKey } from '../availability';
+
 export interface Account {
   id: number;
   name: string;
@@ -5,6 +7,7 @@ export interface Account {
   predefined_message: string;
   tagline: string;
   thumbnail: string;
+  availability?: Availability;
 }
 
 export interface AppearanceSettings {
@@ -28,6 +31,12 @@ export interface AppearanceSettings {
   footer_text: string;
   aria_open: string;
   aria_panel: string;
+  status_online: string;
+  status_offline: string;
+  status_back: string;
+  status_today: string;
+  status_tomorrow: string;
+  offline_subtitle: string;
 }
 
 export interface AppParams {
@@ -35,6 +44,8 @@ export interface AppParams {
   baseUrl: string;
   accounts: Account[];
   appearance: AppearanceSettings;
+  timezone?: string;
+  weekdays?: Record<DayKey, string>;
 }
 
 declare global {
@@ -51,10 +62,16 @@ const root = document.getElementById(rootId) as HTMLElement;
 const baseUrl = params?.baseUrl || "";
 const accounts = params?.accounts ?? [];
 const appearance = params?.appearance;
+const timezone = params?.timezone || 'UTC';
+const weekdays: Record<DayKey, string> = params?.weekdays ?? {
+  mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun',
+};
 
 export const appConfig = Object.freeze({
   root,
   baseUrl,
   accounts,
   appearance,
+  timezone,
+  weekdays,
 });

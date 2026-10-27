@@ -27,6 +27,11 @@
 
         <!-- Pre-filled WhatsApp message should be translated -->
         <custom-field action="translate">_wpwc_predefined_message</custom-field>
+
+        <!-- Availability mode and own weekly schedule: translations of the same
+             account are the same person/department, so they share its hours -->
+        <custom-field action="copy">_wpwc_availability_mode</custom-field>
+        <custom-field action="copy">_wpwc_hours</custom-field>
     </custom-fields>
 
 </wpml-config>

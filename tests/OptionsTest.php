@@ -48,6 +48,8 @@ class OptionsTest extends WPWC_TestCase
       'hide_mobile', 'hide_desktop',
       'panel_title', 'panel_subtitle',
       'cta_text', 'empty_text', 'footer_text',
+      'status_online', 'status_offline', 'status_back',
+      'status_today', 'status_tomorrow', 'offline_subtitle',
     ];
 
     foreach ($expected_keys as $key) {
@@ -359,5 +361,171 @@ class OptionsTest extends WPWC_TestCase
 
     $instance = WP_WhatsApp_Multi_Chat_Options::get_instance();
     $instance->save_appearance();
+  }
+  /* ── Business hours ─────────────────────────────────────────────── */
+
+  private function stub_hours_save_environment(): void
+  {
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\stubs([
+      'wp_unslash'          => function ($v) { return $v; },
+      'get_option'          => [],
+      'get_current_user_id' => 7,
+    ]);
+  }
+
+  public function test_save_hours_blocks_unauthorized(): void
+  {
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->with('manage_options')->andReturn(false);
+    Functions\expect('wp_die')->once()->andReturnUsing(function () {
+      throw new \RuntimeException('wp_die called');
+    });
+    Functions\expect('update_option')->never();
+
+    $this->expectException(\RuntimeException::class);
+
+    WP_WhatsApp_Multi_Chat_Options::get_instance()->save_hours();
+  }
+
+  public function test_save_hours_saves_sanitized_week(): void
+  {
+    $this->stub_hours_save_environment();
+
+    $saved = null;
+    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$saved) {
+      $this->assertSame('wpwc_hours', $key);
+      $saved = $value;
+    });
+    Functions\expect('set_transient')->never();
+
+    $redirect = null;
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) use (&$redirect) {
+      $redirect = $url;
+      throw new WPWC_RedirectException($url);
+    });
+
+    $_POST = ['wpwc_hours' => ['mon' => ['enabled' => '1', 'open' => '07:00', 'close' => '13:00']]];
+
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_hours();
+    } catch (WPWC_RedirectException $e) {
+      // Expected
+    }
+
+    $this->assertSame(['enabled' => 1, 'open' => '07:00', 'close' => '13:00'], $saved['mon']);
+    $this->assertStringContainsString('tab=hours&updated=1', $redirect);
+
+    $_POST = [];
+  }
+
+  public function test_save_hours_stores_errors_for_rejected_days(): void
+  {
+    $this->stub_hours_save_environment();
+
+    $saved = null;
+    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$saved) {
+      $saved = $value;
+    });
+
+    $stored = null;
+    Functions\expect('set_transient')->once()->andReturnUsing(function ($key, $value) use (&$stored) {
+      $this->assertSame('wpwc_hours_errors_7', $key);
+      $stored = $value;
+    });
+
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
+
+    $_POST = ['wpwc_hours' => ['mon' => ['enabled' => '1', 'open' => '18:00', 'close' => '08:00']]];
+
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_hours();
+    } catch (WPWC_RedirectException $e) {
+      // Expected
+    }
+
+    $this->assertSame(['mon' => 'close_before_open'], $stored);
+    $this->assertSame(WP_WhatsApp_Multi_Chat_Hours::defaults()['mon'], $saved['mon']);
+
+    $_POST = [];
+  }
+
+  public function test_reset_hours_deletes_option(): void
+  {
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\stubs([
+      'wp_unslash'   => function ($v) { return $v; },
+      'sanitize_key' => function ($v) { return $v; },
+    ]);
+
+    Functions\expect('delete_option')->once()->with('wpwc_hours');
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
+
+    $_POST = ['wpwc_reset' => ['hours']];
+
+    $redirect = null;
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->reset_all();
+    } catch (WPWC_RedirectException $e) {
+      $redirect = $e->url;
+    }
+
+    $this->assertStringContainsString('updated=reset', $redirect);
+
+    $_POST = [];
+  }
+  public function test_appearance_defaults_status_texts(): void
+  {
+    $defaults = WP_WhatsApp_Multi_Chat_Options::appearance_defaults();
+
+    $this->assertSame('Online agora', $defaults['status_online']);
+    $this->assertSame('Offline', $defaults['status_offline']);
+    $this->assertSame('Volta {dia} às {hora}', $defaults['status_back']);
+    $this->assertSame('hoje', $defaults['status_today']);
+    $this->assertSame('amanhã', $defaults['status_tomorrow']);
+    $this->assertSame('Fora do horário de atendimento. Responderemos assim que voltarmos.', $defaults['offline_subtitle']);
+  }
+
+  public function test_save_appearance_saves_status_texts(): void
+  {
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\stubs([
+      'sanitize_key'        => function ($v) { return strtolower(trim($v)); },
+      'sanitize_text_field' => function ($v) { return $v; },
+      'sanitize_hex_color'  => function ($v) { return $v; },
+      'wp_unslash'          => function ($v) { return $v; },
+      'absint'              => function ($v) { return abs(intval($v)); },
+    ]);
+
+    $saved = null;
+    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$saved) {
+      $saved = $value;
+    });
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
+
+    $_POST = [
+      'status_back'      => 'Back {dia} at {hora}',
+      'offline_subtitle' => '',
+    ];
+
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_appearance();
+    } catch (WPWC_RedirectException $e) {
+      // Expected
+    }
+
+    $this->assertSame('Back {dia} at {hora}', $saved['status_back']);
+    $this->assertSame('', $saved['offline_subtitle']);
+
+    $_POST = [];
   }
 }

@@ -7,6 +7,8 @@
 /.phpunit.cache
 /bin
 /build
+/docs
+/.superpowers
 /frontend
 /tests
 /phpunit.xml

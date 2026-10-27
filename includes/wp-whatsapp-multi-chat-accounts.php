@@ -18,6 +18,7 @@ class WP_WhatsApp_Multi_Chat_Accounts
     add_action('add_meta_boxes', array($this, 'account_meta_boxes'));
     add_action('save_post_' . self::POST_TYPE_SLUG, array($this, 'save_account_meta'));
     add_action('admin_enqueue_scripts', array($this, 'enqueue_account_styles'));
+    add_action('admin_notices', array($this, 'render_hours_errors_notice'));
   }
 
   public function enqueue_account_styles($hook)
@@ -27,12 +28,46 @@ class WP_WhatsApp_Multi_Chat_Accounts
     $screen = get_current_screen();
     if (!$screen || $screen->post_type !== self::POST_TYPE_SLUG) return;
 
-    wp_enqueue_style(
-      'wpwc-admin-account',
-      WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/admin/css/admin-account.css',
+    wp_register_style(
+      'wpwc-admin-hours',
+      WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/admin/css/admin-hours.css',
       array(),
       WP_WHATSAPP_MULTI_CHAT_VERSION
     );
+
+    wp_enqueue_style(
+      'wpwc-admin-account',
+      WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/admin/css/admin-account.css',
+      array('wpwc-admin-hours'),
+      WP_WHATSAPP_MULTI_CHAT_VERSION
+    );
+
+    wp_enqueue_script(
+      'wpwc-admin-account',
+      WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/admin/js/admin-account.js',
+      array(),
+      WP_WHATSAPP_MULTI_CHAT_VERSION,
+      true
+    );
+  }
+
+  /**
+   * Shows, after the save redirect, which days of the account's own schedule
+   * were rejected and kept their previous hours.
+   */
+  public function render_hours_errors_notice()
+  {
+    $screen = get_current_screen();
+    if (!$screen || $screen->base !== 'post' || $screen->post_type !== self::POST_TYPE_SLUG) return;
+
+    $errors = WP_WhatsApp_Multi_Chat_Hours::pull_errors();
+    if (empty($errors)) return;
+
+    echo '<div class="notice notice-error is-dismissible">';
+    foreach ($errors as $day => $code) {
+      echo '<p>' . esc_html(WP_WhatsApp_Multi_Chat_Hours::error_message($day, $code)) . '</p>';
+    }
+    echo '</div>';
   }
 
   public function register_account_post_type()
@@ -80,6 +115,43 @@ class WP_WhatsApp_Multi_Chat_Accounts
       self::POST_TYPE_SLUG,
       'normal'
     );
+
+    add_meta_box(
+      self::POST_TYPE_SLUG . '_availability',
+      __('Disponibilidade', 'wp-whatsapp-multi-chat'),
+      array($this, 'render_availability_meta_box'),
+      self::POST_TYPE_SLUG,
+      'normal'
+    );
+  }
+
+  /**
+   * Uses the nonce printed by the "Detalhes da Conta" box, which always renders
+   * on the same screen.
+   */
+  public function render_availability_meta_box($post)
+  {
+    $mode  = WP_WhatsApp_Multi_Chat_Hours::get_account_mode($post->ID);
+    $hours = WP_WhatsApp_Multi_Chat_Hours::normalize_week(
+      get_post_meta($post->ID, WP_WhatsApp_Multi_Chat_Hours::HOURS_META_KEY, true)
+    );
+?>
+    <div class="wpwc-meta-field">
+      <label for="wpwc_availability_mode" class="wpwc-meta-label"><?php esc_html_e('Quando esta conta aparece como online', 'wp-whatsapp-multi-chat'); ?></label>
+      <select id="wpwc_availability_mode" name="wpwc_availability_mode">
+        <?php foreach (WP_WhatsApp_Multi_Chat_Hours::mode_labels() as $value => $label) : ?>
+          <option value="<?php echo esc_attr($value); ?>" <?php selected($mode, $value); ?>><?php echo esc_html($label); ?></option>
+        <?php endforeach; ?>
+      </select>
+      <small class="wpwc-meta-hint">
+        <?php esc_html_e('"Horário geral" segue a aba Horários da Configuração. "Sempre offline" serve para férias ou feriados. Fora do horário a conta continua clicável, mas aparece como offline.', 'wp-whatsapp-multi-chat'); ?>
+      </small>
+    </div>
+
+    <div class="wpwc-account-hours" <?php echo 'custom' === $mode ? '' : 'hidden'; ?>>
+      <?php WP_WhatsApp_Multi_Chat_Hours::render_week_fields('wpwc_account_hours', $hours); ?>
+    </div>
+<?php
   }
 
   public function render_account_meta_box($post)
@@ -142,6 +214,25 @@ class WP_WhatsApp_Multi_Chat_Accounts
     if (isset($_POST['wpwc_predefined_message'])) {
       update_post_meta($post_id, '_wpwc_predefined_message', sanitize_textarea_field(wp_unslash($_POST['wpwc_predefined_message'])));
     }
+
+    // Only the account editor sends these fields; quick edit and other forms
+    // must not reset an account's availability.
+    if (isset($_POST['wpwc_availability_mode'])) {
+      $mode = sanitize_key(wp_unslash($_POST['wpwc_availability_mode']));
+      if (!in_array($mode, WP_WhatsApp_Multi_Chat_Hours::MODES, true)) {
+        $mode = 'always_online';
+      }
+      update_post_meta($post_id, WP_WhatsApp_Multi_Chat_Hours::MODE_META_KEY, $mode);
+    }
+
+    if (isset($_POST['wpwc_account_hours'])) {
+      $result = WP_WhatsApp_Multi_Chat_Hours::sanitize_week(
+        wp_unslash($_POST['wpwc_account_hours']), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated by sanitize_week()
+        WP_WhatsApp_Multi_Chat_Hours::normalize_week(get_post_meta($post_id, WP_WhatsApp_Multi_Chat_Hours::HOURS_META_KEY, true))
+      );
+      update_post_meta($post_id, WP_WhatsApp_Multi_Chat_Hours::HOURS_META_KEY, $result['hours']);
+      WP_WhatsApp_Multi_Chat_Hours::store_errors($result['errors']);
+    }
   }
 
   public function account_tabulation_header($defaults)
@@ -150,6 +241,7 @@ class WP_WhatsApp_Multi_Chat_Accounts
     $defaults['title']   = esc_html__('Nome', 'wp-whatsapp-multi-chat');
     $defaults['picture'] = esc_html__('Foto', 'wp-whatsapp-multi-chat');
     $defaults['number']  = esc_html__('Número', 'wp-whatsapp-multi-chat');
+    $defaults['availability'] = esc_html__('Disponibilidade', 'wp-whatsapp-multi-chat');
     return $defaults;
   }
 
@@ -164,6 +256,10 @@ class WP_WhatsApp_Multi_Chat_Accounts
     }
     if ($column_name === 'number') {
       echo esc_html(get_post_meta($post_id, '_wpwc_number', true));
+    }
+    if ($column_name === 'availability') {
+      $labels = WP_WhatsApp_Multi_Chat_Hours::mode_labels();
+      echo esc_html($labels[WP_WhatsApp_Multi_Chat_Hours::get_account_mode((int) $post_id)]);
     }
   }
 
