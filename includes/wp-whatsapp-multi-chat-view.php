@@ -181,6 +181,8 @@ class WP_WhatsApp_Multi_Chat_View
     $text_fields = array(
       'button_text', 'tooltip_text', 'panel_title', 'panel_subtitle',
       'cta_text', 'empty_text', 'footer_text',
+      'status_online', 'status_offline', 'status_back',
+      'status_today', 'status_tomorrow', 'offline_subtitle',
     );
 
     foreach ($text_fields as $field) {

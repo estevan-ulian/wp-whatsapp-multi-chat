@@ -48,6 +48,8 @@ class OptionsTest extends WPWC_TestCase
       'hide_mobile', 'hide_desktop',
       'panel_title', 'panel_subtitle',
       'cta_text', 'empty_text', 'footer_text',
+      'status_online', 'status_offline', 'status_back',
+      'status_today', 'status_tomorrow', 'offline_subtitle',
     ];
 
     foreach ($expected_keys as $key) {
@@ -475,6 +477,54 @@ class OptionsTest extends WPWC_TestCase
     }
 
     $this->assertStringContainsString('updated=reset', $redirect);
+
+    $_POST = [];
+  }
+  public function test_appearance_defaults_status_texts(): void
+  {
+    $defaults = WP_WhatsApp_Multi_Chat_Options::appearance_defaults();
+
+    $this->assertSame('Online agora', $defaults['status_online']);
+    $this->assertSame('Offline', $defaults['status_offline']);
+    $this->assertSame('Volta {dia} às {hora}', $defaults['status_back']);
+    $this->assertSame('hoje', $defaults['status_today']);
+    $this->assertSame('amanhã', $defaults['status_tomorrow']);
+    $this->assertSame('Fora do horário de atendimento. Responderemos assim que voltarmos.', $defaults['offline_subtitle']);
+  }
+
+  public function test_save_appearance_saves_status_texts(): void
+  {
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\stubs([
+      'sanitize_key'        => function ($v) { return strtolower(trim($v)); },
+      'sanitize_text_field' => function ($v) { return $v; },
+      'sanitize_hex_color'  => function ($v) { return $v; },
+      'wp_unslash'          => function ($v) { return $v; },
+      'absint'              => function ($v) { return abs(intval($v)); },
+    ]);
+
+    $saved = null;
+    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$saved) {
+      $saved = $value;
+    });
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
+
+    $_POST = [
+      'status_back'      => 'Back {dia} at {hora}',
+      'offline_subtitle' => '',
+    ];
+
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_appearance();
+    } catch (WPWC_RedirectException $e) {
+      // Expected
+    }
+
+    $this->assertSame('Back {dia} at {hora}', $saved['status_back']);
+    $this->assertSame('', $saved['offline_subtitle']);
 
     $_POST = [];
   }
