@@ -90,6 +90,8 @@ class ViewTest extends WPWC_TestCase
     $this->assertSame('Hello', $result[0]['predefined_message']);
     $this->assertSame('Suporte', $result[0]['tagline']);
     $this->assertSame('https://example.com/image.jpg', $result[0]['thumbnail']);
+    // Accounts saved before business hours existed stay always online.
+    $this->assertSame(['mode' => 'always_online'], $result[0]['availability']);
   }
 
   public function test_get_accounts_handles_missing_thumbnail(): void
@@ -485,5 +487,81 @@ class ViewTest extends WPWC_TestCase
 
     $this->assertFalse($this->invoke_should_display($instance));
   }
-}
+  /* ── Business hours payload ─────────────────────────────────────── */
 
+  public function test_get_accounts_includes_schedule_for_general_mode(): void
+  {
+    $mock_post = new stdClass();
+    $mock_post->ID = 3;
+    $mock_post->post_type = 'wpwc_account';
+
+    $general = WP_WhatsApp_Multi_Chat_Hours::defaults();
+    $general['sat'] = ['enabled' => 1, 'open' => '09:00', 'close' => '13:00'];
+
+    Functions\expect('get_posts')->once()->andReturn([$mock_post]);
+    Functions\when('get_post_meta')->alias(function ($id, $key, $single) {
+      return $key === '_wpwc_availability_mode' ? 'general' : '';
+    });
+    Functions\when('get_option')->justReturn($general);
+    Functions\when('get_the_post_thumbnail_url')->justReturn(false);
+
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+    $result = (new ReflectionMethod($instance, 'get_accounts'))->invoke($instance);
+
+    $this->assertSame(['mode' => 'schedule', 'hours' => $general], $result[0]['availability']);
+  }
+
+  public function test_get_weekday_abbrevs_uses_wp_locale(): void
+  {
+    $GLOBALS['wp_locale'] = new class {
+      private $names = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+      public function get_weekday($n) { return $this->names[$n]; }
+      public function get_weekday_abbrev($name) { return mb_substr($name, 0, 3); }
+    };
+
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+    $result = (new ReflectionMethod($instance, 'get_weekday_abbrevs'))->invoke($instance);
+
+    $this->assertSame(
+      ['mon' => 'seg', 'tue' => 'ter', 'wed' => 'qua', 'thu' => 'qui', 'fri' => 'sex', 'sat' => 'sáb', 'sun' => 'dom'],
+      $result
+    );
+
+    unset($GLOBALS['wp_locale']);
+  }
+
+  public function test_get_weekday_abbrevs_without_wp_locale_falls_back_to_english(): void
+  {
+    unset($GLOBALS['wp_locale']);
+
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+    $result = (new ReflectionMethod($instance, 'get_weekday_abbrevs'))->invoke($instance);
+
+    $this->assertSame(
+      ['mon' => 'Mon', 'tue' => 'Tue', 'wed' => 'Wed', 'thu' => 'Thu', 'fri' => 'Fri', 'sat' => 'Sat', 'sun' => 'Sun'],
+      $result
+    );
+  }
+
+  public function test_enqueue_frontend_scripts_sends_site_timezone_and_weekdays(): void
+  {
+    Functions\stubs([
+      'wp_enqueue_style'           => true,
+      'wp_enqueue_script'          => true,
+      'get_option'                 => [],
+      'wp_parse_args'              => function ($args, $defaults) { return array_merge($defaults, (array) $args); },
+      'get_posts'                  => [],
+      'wp_timezone_string'         => 'America/Sao_Paulo',
+    ]);
+
+    $payload = null;
+    Functions\expect('wp_localize_script')->once()->andReturnUsing(function ($handle, $name, $data) use (&$payload) {
+      $payload = $data;
+    });
+
+    WP_WhatsApp_Multi_Chat_View::get_instance()->enqueue_frontend_scripts();
+
+    $this->assertSame('America/Sao_Paulo', $payload['timezone']);
+    $this->assertSame(WP_WhatsApp_Multi_Chat_Hours::DAYS, array_keys($payload['weekdays']));
+  }
+}
