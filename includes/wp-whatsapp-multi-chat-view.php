@@ -77,95 +77,78 @@ class WP_WhatsApp_Multi_Chat_View
   {
     if ($this->display_cached !== null) return $this->display_cached;
 
-    $conditions = wp_parse_args(
-      get_option(WP_WhatsApp_Multi_Chat_Options::OPTION_KEY, array()),
-      array(
-        'display_mode'    => 'manual',
-        'show_front_page' => 0,
-        'post_types'      => array(),
-        'archives'        => array(),
-        'include_posts'   => array(),
-        'exclude_posts'   => array(),
-      )
+    $rules = WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(
+      get_option(WP_WhatsApp_Multi_Chat_Options::OPTION_KEY, array())
     );
 
-    $exclude_ids = $this->maybe_translate_post_ids(array_map('intval', (array) $conditions['exclude_posts']));
-    $include_ids = $this->maybe_translate_post_ids(array_map('intval', (array) $conditions['include_posts']));
+    $this->display_cached = WP_WhatsApp_Multi_Chat_Display_Rules::matches(
+      $this->translate_rule_items($rules),
+      $this->build_context()
+    );
 
-    // Exclusions always win
-    if (!empty($exclude_ids) && is_singular() && in_array((int) get_the_ID(), $exclude_ids, true)) {
-      $this->display_cached = false;
-      return false;
-    }
-
-    // Specific-page inclusions override manual rules
-    if (!empty($include_ids) && is_singular() && in_array((int) get_the_ID(), $include_ids, true)) {
-      $this->display_cached = true;
-      return true;
-    }
-
-    if ('everywhere' === $conditions['display_mode']) {
-      $this->display_cached = true;
-      return true;
-    }
-
-    // Manual mode
-    if (!empty($conditions['show_front_page']) && is_front_page()) {
-      $this->display_cached = true;
-      return true;
-    }
-
-    $post_types = (array) $conditions['post_types'];
-    if (!empty($post_types) && is_singular($post_types)) {
-      $this->display_cached = true;
-      return true;
-    }
-
-    foreach ((array) $conditions['archives'] as $key) {
-      $match = false;
-      switch ($key) {
-        case 'category': $match = is_category(); break;
-        case 'tag':      $match = is_tag();      break;
-        case 'author':   $match = is_author();   break;
-        case 'date':     $match = is_date();     break;
-        case 'search':   $match = is_search();   break;
-        case '404':      $match = is_404();      break;
-        default:
-          if (strpos($key, 'tax_') === 0) {
-            $match = is_tax(substr($key, 4));
-          }
-      }
-      if ($match) {
-        $this->display_cached = true;
-        return true;
-      }
-    }
-
-    $this->display_cached = false;
-    return false;
+    return $this->display_cached;
   }
 
   /**
-   * When WPML is active, translates an array of stored (original-language) post IDs
-   * to their equivalents in the current language.
-   *
-   * @param int[] $ids
-   * @return int[]
+   * Describes the current page for the display rules with WordPress
+   * conditionals. A static front page is also a singular Page, as in WordPress.
    */
-  private function maybe_translate_post_ids(array $ids): array
+  private function build_context(): array
   {
-    if (!defined('ICL_LANGUAGE_CODE') || empty($ids)) {
-      return $ids;
+    $context = WP_WhatsApp_Multi_Chat_Display_Rules::empty_context();
+
+    $context['front_page'] = (bool) is_front_page();
+    $context['blog']       = is_home() && !$context['front_page'];
+    $context['archive']    = (bool) is_archive();
+    $context['author']     = (bool) is_author();
+    $context['date']       = (bool) is_date();
+    $context['search']     = (bool) is_search();
+    $context['not_found']  = (bool) is_404();
+
+    if (is_post_type_archive()) {
+      $type           = get_query_var('post_type');
+      $context['pta'] = (string) (is_array($type) ? reset($type) : $type);
     }
 
-    $translated = array();
-    foreach ($ids as $id) {
-      $post_type     = get_post_type($id) ?: 'post';
-      $translated_id = (int) apply_filters('wpml_object_id', $id, $post_type, true);
-      $translated[]  = $translated_id;
+    if (is_category() || is_tag() || is_tax()) {
+      $term = get_queried_object();
+      if (is_object($term) && isset($term->taxonomy, $term->term_id)) {
+        $context['tax']  = (string) $term->taxonomy;
+        $context['term'] = (int) $term->term_id;
+      }
     }
 
-    return $translated;
+    if (is_singular()) {
+      $context['singular'] = (string) get_post_type();
+      $context['object']   = (int) get_queried_object_id();
+    }
+
+    return $context;
+  }
+
+  /**
+   * When WPML is active, rules saved with a page, post or term in the original
+   * language also apply to its translation in the current language.
+   */
+  private function translate_rule_items(array $rules): array
+  {
+    if (!defined('ICL_LANGUAGE_CODE')) return $rules;
+
+    foreach ($rules as $i => $rule) {
+      if (0 === (int) $rule['item']) continue;
+
+      if ('singular' === $rule['where']) {
+        $type = $rule['which'];
+      } elseif ('archive' === $rule['where'] && 0 === strpos($rule['which'], 'tax_')) {
+        $type = substr($rule['which'], 4);
+      } else {
+        continue;
+      }
+
+      $rules[$i]['item'] = (int) apply_filters('wpml_object_id', (int) $rule['item'], $type, true);
+    }
+
+    return $rules;
   }
 
   /**

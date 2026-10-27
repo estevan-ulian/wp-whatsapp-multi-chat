@@ -2,138 +2,259 @@
 (function ($) {
   'use strict';
 
-  function initPostSelector(element) {
-    var $selector = $(element);
-    var $input    = $selector.find('.wpwc-search-input');
-    var $results  = $selector.find('.wpwc-search-results');
-    var $list     = $selector.find('.wpwc-selected-items');
-    var fieldName = $selector.data('field');
-    var timerId   = null;
+  /*
+   * Display rules list. Each row is Ação · Onde · Qual · Item; "Qual" only
+   * exists for archives and single views, and "Item" only for single views and
+   * taxonomies. Hide rules always win over show rules (decided in PHP).
+   */
+  var data    = (wpwcOptions && wpwcOptions.rules) || null;
+  var $list   = null;
+  var counter = 0;
 
-    /* -- helpers --------------------------------------------------------- */
+  function format(text, value) {
+    return String(text).replace(/%[ds]/, value);
+  }
 
-    function getSelectedIds() {
-      return $list.find('input[type="hidden"]').map(function () {
-        return String($(this).val());
-      }).get();
+  function whichOptions(where) {
+    if (!data) return {};
+    if (where === 'archive') return data.choices.archive;
+    if (where === 'singular') return data.choices.singular;
+    return {};
+  }
+
+  // Single views search posts of the chosen type; taxonomies search their terms.
+  function itemSource(where, which) {
+    if (where === 'singular' && which) return { action: 'wpwc_search_posts', post_type: which };
+    if (where === 'archive' && which && which.indexOf('tax_') === 0) {
+      return { action: 'wpwc_search_terms', taxonomy: which.slice(4) };
+    }
+    return null;
+  }
+
+  function field(labelText, $control) {
+    var id = 'wpwc-rule-' + (counter++);
+    $control.attr('id', id);
+    return $('<span/>').addClass('wpwc-rule-field')
+      .append($('<label/>').addClass('screen-reader-text').attr('for', id).text(labelText))
+      .append($control);
+  }
+
+  function select(name, options, current) {
+    var $select = $('<select/>').addClass('wpwc-rule-' + name);
+    $.each(options, function (value, label) {
+      $select.append($('<option/>').val(value).text(label));
+    });
+    // A saved value no longer offered stays visible so the admin can see and remove it.
+    if (current && !Object.prototype.hasOwnProperty.call(options, current)) {
+      $select.append($('<option/>').val(current).text(format(data.i18n.unknown, current)));
+    }
+    if (current) $select.val(current);
+    return $select;
+  }
+
+  function buildRow(rule) {
+    var $row = $('<li/>').addClass('wpwc-rule');
+
+    $row.append(field(data.i18n.action, select('action', { show: data.i18n.show, hide: data.i18n.hide }, rule.action)));
+    $row.append(field(data.i18n.whereLabel, select('where', data.where, rule.where)));
+    $row.append($('<span/>').addClass('wpwc-rule-which-slot'));
+    $row.append($('<span/>').addClass('wpwc-rule-item-slot'));
+    $row.append(
+      $('<button/>').attr({ type: 'button', 'aria-label': data.i18n.remove, title: data.i18n.remove })
+        .addClass('wpwc-rule-remove button-link').html('&times;')
+    );
+
+    renderWhich($row, rule.which);
+    renderItem($row, rule);
+    return $row;
+  }
+
+  function renderWhich($row, current) {
+    var where = $row.find('.wpwc-rule-where').val();
+    var $slot = $row.find('.wpwc-rule-which-slot').empty();
+    var options = whichOptions(where);
+
+    if ($.isEmptyObject(options)) return;
+    $slot.append(field(data.i18n.which, select('which', options, current)));
+  }
+
+  function renderItem($row, rule) {
+    var where  = $row.find('.wpwc-rule-where').val();
+    var which  = $row.find('.wpwc-rule-which').val() || '';
+    var $slot  = $row.find('.wpwc-rule-item-slot').empty();
+    var source = itemSource(where, which);
+
+    if (!source) return;
+
+    var item  = rule && rule.item ? parseInt(rule.item, 10) : 0;
+    var title = '';
+    if (item > 0) title = rule.missing ? format(data.i18n.unavailable, item) : rule.title;
+
+    var $hidden = $('<input/>').attr('type', 'hidden').addClass('wpwc-rule-item-id').val(item);
+    var $input  = $('<input/>').attr({ type: 'text', autocomplete: 'off', placeholder: data.i18n.searchHint })
+      .addClass('wpwc-search-input wpwc-rule-item-search regular-text').val(title)
+      .toggleClass('is-missing', !!(rule && rule.missing));
+    var $results = $('<div/>').addClass('wpwc-search-results').attr('hidden', true);
+    var $wrap    = $('<span/>').addClass('wpwc-search-wrap').append($hidden, field(data.i18n.item, $input), $results);
+
+    $slot.append($wrap);
+    bindSearch($wrap, source);
+  }
+
+  // Typed text only counts once a suggestion is chosen; an empty field means "Todos".
+  // Until then the field is pending and the form will not submit, so a half-typed
+  // name never turns into a rule for every item.
+  function bindSearch($wrap, source) {
+    var $input   = $wrap.find('.wpwc-rule-item-search');
+    var $hidden  = $wrap.find('.wpwc-rule-item-id');
+    var $results = $wrap.find('.wpwc-search-results');
+    var chosen   = $input.val();
+    var timerId  = null;
+
+    function setPending(pending) {
+      $input.toggleClass('is-pending', pending).attr('aria-invalid', pending ? 'true' : null);
+      $wrap.find('.wpwc-rule-error').remove();
     }
 
-    function addItem(id, title, type) {
-      if (getSelectedIds().indexOf(String(id)) !== -1) return;
-
-      var $li = $('<li/>')
-        .attr('data-id', id)
-        .append($('<span/>').addClass('wpwc-item-title').text(title))
-        .append($('<span/>').addClass('wpwc-type-label').text(type))
-        .append(
-          $('<button/>')
-            .attr({ type: 'button', 'aria-label': wpwcOptions.removeLabel })
-            .addClass('wpwc-remove-item button-link')
-            .html('&times;')
-        )
-        .append(
-          $('<input/>').attr({ type: 'hidden', name: fieldName + '[]', value: id })
-        );
-
-      $list.append($li);
+    function choose(id, title) {
+      chosen = title;
+      $hidden.val(id);
+      $input.val(title).removeClass('is-missing');
+      setPending(false);
+      $results.attr('hidden', true);
+      $input.trigger('focus');
     }
-
-    /* -- render dropdown results ----------------------------------------- */
-
-    function renderResults(items) {
-      $results.empty();
-
-      if (!items || items.length === 0) {
-        $results
-          .append($('<div/>').addClass('wpwc-no-results').text(wpwcOptions.noResults))
-          .removeAttr('hidden');
-        return;
-      }
-
-      var selectedIds = getSelectedIds();
-
-      $.each(items, function (i, item) {
-        var isSelected = selectedIds.indexOf(String(item.id)) !== -1;
-
-        var $item = $('<div/>')
-          .addClass('wpwc-result-item')
-          .toggleClass('wpwc-result-selected', isSelected)
-          .append($('<span/>').addClass('wpwc-result-title').text(item.title))
-          .append($('<span/>').addClass('wpwc-type-label').text(item.type));
-
-        if (!isSelected) {
-          $item.on('click', function () {
-            addItem(item.id, item.title, item.type);
-            $input.val('');
-            $results.attr('hidden', true);
-          });
-        }
-
-        $results.append($item);
-      });
-
-      $results.removeAttr('hidden');
-    }
-
-    /* -- search input ---------------------------------------------------- */
 
     $input.on('input', function () {
-      var val = $.trim($(this).val());
+      var val = $.trim($input.val());
       clearTimeout(timerId);
 
-      if (val.length < 2) {
+      if (val === '') {
+        chosen = '';
+        $hidden.val(0);
+        setPending(false);
         $results.attr('hidden', true);
         return;
       }
 
+      setPending(val !== chosen);
+      if (val.length < 2) return;
+
       timerId = setTimeout(function () {
-        $input.closest('.wpwc-search-wrap').addClass('is-loading');
-        $.post(
-          wpwcOptions.ajaxUrl,
-          { action: 'wpwc_search_posts', nonce: wpwcOptions.nonce, search: val },
-          function (response) {
-            $input.closest('.wpwc-search-wrap').removeClass('is-loading');
-            if (response.success) {
-              renderResults(response.data);
-            }
+        $wrap.addClass('is-loading');
+        $.post(wpwcOptions.ajaxUrl, $.extend({ nonce: wpwcOptions.nonce, search: val }, source), function (response) {
+          $wrap.removeClass('is-loading');
+          $results.empty();
+          if (!response.success || !response.data.length) {
+            $results.append($('<div/>').addClass('wpwc-no-results').text(wpwcOptions.noResults));
+          } else {
+            $.each(response.data, function (i, found) {
+              $('<button/>').attr('type', 'button').addClass('wpwc-result-item')
+                .append($('<span/>').addClass('wpwc-result-title').text(found.title))
+                .on('click', function () { choose(found.id, found.title); })
+                .appendTo($results);
+            });
           }
-        ).fail(function () {
-          $input.closest('.wpwc-search-wrap').removeClass('is-loading');
+          $results.removeAttr('hidden');
+        }).fail(function () {
+          $wrap.removeClass('is-loading');
         });
       }, 300);
     });
 
-    /* -- remove selected item -------------------------------------------- */
+    $input.on('keydown', function (e) {
+      if (e.key === 'Escape') $results.attr('hidden', true);
+      // Enter picks the first suggestion instead of submitting the form.
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var $first = $results.is(':visible') ? $results.find('.wpwc-result-item').first() : $();
+        if ($first.length) $first.trigger('click');
+      }
+    });
+  }
 
-    $list.on('click', '.wpwc-remove-item', function () {
-      $(this).closest('li').remove();
+  function blockPendingItems(e) {
+    var $pending = $list.find('.wpwc-rule-item-search.is-pending');
+    if (!$pending.length) return;
+
+    e.preventDefault();
+    $pending.each(function () {
+      var $wrap = $(this).closest('.wpwc-search-wrap');
+      if (!$wrap.find('.wpwc-rule-error').length) {
+        $('<span/>').addClass('wpwc-rule-error').attr('role', 'alert').text(data.i18n.pending).appendTo($wrap);
+      }
+    });
+    $pending.first().trigger('focus');
+  }
+
+  // Field names follow the row order so PHP receives rules[0..n].
+  function reindex() {
+    $list.children('.wpwc-rule').each(function (index) {
+      var prefix = 'rules[' + index + ']';
+      var $row = $(this);
+      $row.find('.wpwc-rule-action').attr('name', prefix + '[action]');
+      $row.find('.wpwc-rule-where').attr('name', prefix + '[where]');
+      $row.find('.wpwc-rule-which').attr('name', prefix + '[which]');
+      $row.find('.wpwc-rule-item-id').attr('name', prefix + '[item]');
+    });
+    $('.wpwc-rules-empty').prop('hidden', $list.children().length > 0);
+  }
+
+  function initRules() {
+    $list = $('#wpwc-rules');
+    if (!$list.length || !data) return;
+
+    $.each(data.saved, function (i, rule) {
+      $list.append(buildRow(rule));
+    });
+    reindex();
+
+    // Tells PHP the list was drawn; without it, saving is refused instead of
+    // wiping every rule. Saving only becomes possible from here on.
+    var $form = $list.closest('form');
+    $form.append($('<input/>').attr({ type: 'hidden', name: 'wpwc_rules_ready', value: '1' }));
+    $form.on('submit', blockPendingItems);
+    $('#wpwc-rules-submit').prop('disabled', false);
+
+    $('#wpwc-add-rule').on('click', function () {
+      var $row = buildRow({ action: 'show', where: 'entire_site', which: '', item: 0 });
+      $list.append($row);
+      reindex();
+      $row.find('.wpwc-rule-where').trigger('focus');
     });
 
-    /* -- close dropdown on outside click --------------------------------- */
+    $list.on('change', '.wpwc-rule-where', function () {
+      var $row = $(this).closest('.wpwc-rule');
+      renderWhich($row, '');
+      renderItem($row, null);
+      reindex();
+    });
 
-    $(document).on('click.wpwcSelector', function (e) {
-      if (!$selector.is(e.target) && $selector.has(e.target).length === 0) {
-        $results.attr('hidden', true);
-      }
+    $list.on('change', '.wpwc-rule-which', function () {
+      var $row = $(this).closest('.wpwc-rule');
+      renderItem($row, null);
+      reindex();
+    });
+
+    $list.on('click', '.wpwc-rule-remove', function () {
+      $(this).closest('.wpwc-rule').remove();
+      reindex();
+      $('#wpwc-add-rule').trigger('focus');
+    });
+
+    $(document).on('click.wpwcRules', function (e) {
+      $list.find('.wpwc-search-wrap').each(function () {
+        if (!$(this).is(e.target) && $(this).has(e.target).length === 0) {
+          $(this).find('.wpwc-search-results').attr('hidden', true);
+        }
+      });
     });
   }
 
   /* -- init ---------------------------------------------------------------- */
 
   $(document).ready(function () {
-    $('.wpwc-post-selector').each(function () {
-      initPostSelector(this);
-    });
-
-    /* display mode radio toggle */
-    $(document).on('change', 'input[name="display_mode"]', function () {
-      var $manual = $('.wpwc-manual-conditions');
-      if ($(this).val() === 'everywhere') {
-        $manual.addClass('is-hidden');
-      } else {
-        $manual.removeClass('is-hidden');
-      }
-    });
+    initRules();
 
     /* button style toggle: show/hide button-text row */
     $(document).on('change', 'input[name="button_style"]', function () {

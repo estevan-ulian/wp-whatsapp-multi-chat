@@ -50,31 +50,24 @@ class WpmlTest extends WPWC_TestCase
   }
 
   // ===========================================================================
-  // maybe_translate_post_ids — WITHOUT WPML (ICL_LANGUAGE_CODE not defined)
+  // translate_rule_items — WITHOUT WPML (ICL_LANGUAGE_CODE not defined)
   // ===========================================================================
 
-  public function test_translate_post_ids_without_wpml_returns_ids_unchanged(): void
+  private function sampleRules(): array
   {
-    $ids = [10, 20, 30];
-
-    $result = $this->callPrivate($this->view(), 'maybe_translate_post_ids', $ids);
-
-    $this->assertSame($ids, $result);
+    return [
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'tax_category', 'item' => 5],
+      ['action' => 'show', 'where' => 'singular', 'which' => 'page', 'item' => 10],
+      ['action' => 'show', 'where' => 'singular', 'which' => 'page', 'item' => 0],
+      ['action' => 'show', 'where' => 'archive', 'which' => 'pta_cases', 'item' => 0],
+    ];
   }
 
-  #[PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
-  public function test_translate_post_ids_without_wpml_does_not_apply_wpml_object_id_filter(): void
+  public function test_translate_rule_items_without_wpml_returns_rules_unchanged(): void
   {
     Filters\expectApplied('wpml_object_id')->never();
 
-    $this->callPrivate($this->view(), 'maybe_translate_post_ids', [1, 2]);
-  }
-
-  public function test_translate_post_ids_without_wpml_empty_array_returns_empty(): void
-  {
-    $result = $this->callPrivate($this->view(), 'maybe_translate_post_ids', []);
-
-    $this->assertSame([], $result);
+    $this->assertSame($this->sampleRules(), $this->callPrivate($this->view(), 'translate_rule_items', $this->sampleRules()));
   }
 
   // ===========================================================================
@@ -194,56 +187,24 @@ class WpmlTest extends WPWC_TestCase
   }
 
   // ===========================================================================
-  // maybe_translate_post_ids — WITH WPML active
+  // translate_rule_items — WITH WPML active
   // ===========================================================================
 
+  // Regras de página ou termo do idioma original valem para a tradução; "Todos" (0) e regras sem item ficam iguais.
   #[PHPUnit\Framework\Attributes\RunInSeparateProcess]
-  public function test_translate_post_ids_with_wpml_calls_wpml_object_id_for_each_id(): void
+  public function test_translate_rule_items_with_wpml_translates_terms_and_posts(): void
   {
     define('ICL_LANGUAGE_CODE', 'fr');
 
-    Functions\expect('get_post_type')
-      ->twice()
-      ->andReturn('post');
-
     Filters\expectApplied('wpml_object_id')
       ->twice()
-      ->andReturnUsing(function ($id) {
-        return $id + 100; // simulated translated ID
+      ->andReturnUsing(function ($id, $type) {
+        return ['category:5' => 9, 'page:10' => 20][$type . ':' . $id];
       });
 
-    $result = $this->callPrivate($this->view(), 'maybe_translate_post_ids', [1, 2]);
+    $result = $this->callPrivate($this->view(), 'translate_rule_items', $this->sampleRules());
 
-    $this->assertSame([101, 102], $result);
-  }
-
-  #[PHPUnit\Framework\Attributes\RunInSeparateProcess]
-  public function test_translate_post_ids_with_wpml_empty_array_skips_filter(): void
-  {
-    define('ICL_LANGUAGE_CODE', 'fr');
-
-    Filters\expectApplied('wpml_object_id')->never();
-
-    $result = $this->callPrivate($this->view(), 'maybe_translate_post_ids', []);
-
-    $this->assertSame([], $result);
-  }
-
-  #[PHPUnit\Framework\Attributes\RunInSeparateProcess]
-  #[PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
-  public function test_translate_post_ids_with_wpml_uses_post_as_default_type_when_unknown(): void
-  {
-    define('ICL_LANGUAGE_CODE', 'es');
-
-    // get_post_type returns false for unknown posts; code falls back to 'post'
-    Functions\expect('get_post_type')->once()->andReturn(false);
-
-    Filters\expectApplied('wpml_object_id')
-      ->once()
-      ->with(\Mockery::any(), 'post', true)
-      ->andReturnFirstArg();
-
-    $this->callPrivate($this->view(), 'maybe_translate_post_ids', [99]);
+    $this->assertSame([9, 20, 0, 0], array_column($result, 'item'));
   }
 
   // ===========================================================================

@@ -7,6 +7,25 @@ do WordPress de quem usa o plugin.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o
 versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.3.0]
+
+### Alterado
+- Condições de Exibição viram uma lista de regras **Exibir / Ocultar**. Cada regra
+  escolhe onde vale (Site inteiro, Página inicial, Arquivos, Individuais, Busca,
+  Página 404), qual tipo e, opcionalmente, uma página, post ou termo específico.
+  Regras de Ocultar sempre vencem as de Exibir.
+
+### Adicionado
+- Agora é possível ocultar o widget de um arquivo inteiro, como a listagem de um tipo
+  de post, todas as categorias ou uma categoria específica.
+- Arquivos de tipos de post e a página de posts (blog) podem ser escolhidos.
+- Tipos internos de outros plugins (modelos do Elementor, itens do JetEngine) deixam
+  de aparecer na lista de tipos.
+
+### Observação
+- A configuração atual é convertida automaticamente e o widget continua aparecendo
+  nos mesmos lugares. O formato antigo só é substituído quando a tela é salva.
+
 ## [1.2.0]
 
 ### Adicionado

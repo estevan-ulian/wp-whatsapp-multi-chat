@@ -17,6 +17,7 @@ class WP_WhatsApp_Multi_Chat_Options
     add_action('admin_menu', array($this, 'add_options_page'));
     add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
     add_action('wp_ajax_wpwc_search_posts', array($this, 'ajax_search_posts'));
+    add_action('wp_ajax_wpwc_search_terms', array($this, 'ajax_search_terms'));
     add_action('admin_post_wpwc_save_display_conditions', array($this, 'save_display_conditions'));
     add_action('admin_post_wpwc_save_appearance', array($this, 'save_appearance'));
     add_action('admin_post_wpwc_save_hours', array($this, 'save_hours'));
@@ -66,8 +67,8 @@ class WP_WhatsApp_Multi_Chat_Options
       'ajaxUrl'          => admin_url('admin-ajax.php'),
       'nonce'            => wp_create_nonce('wpwc_search_posts'),
       'noResults'        => __('Nenhum resultado encontrado', 'wp-whatsapp-multi-chat'),
-      'removeLabel'      => __('Remover', 'wp-whatsapp-multi-chat'),
       'resetConfirmText' => __('Tem certeza? Esta ação é irreversível e apagará todos os dados do plugin.', 'wp-whatsapp-multi-chat'),
+      'rules'            => $this->get_rules_screen_data(),
     ));
   }
 
@@ -79,10 +80,16 @@ class WP_WhatsApp_Multi_Chat_Options
       wp_send_json_error('Unauthorized', 403);
     }
 
-    $search = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $search    = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'any';
+
+    // Only post types offered on the rules screen can be searched.
+    if ('any' !== $post_type && !array_key_exists($post_type, $this->get_available_post_types($this->get_saved_rules()))) {
+      wp_send_json_error('Invalid post type', 400);
+    }
 
     $query = new WP_Query(array(
-      'post_type'      => 'any',
+      'post_type'      => $post_type,
       'post_status'    => 'publish',
       's'              => $search,
       'posts_per_page' => 20,
@@ -100,6 +107,104 @@ class WP_WhatsApp_Multi_Chat_Options
     }
 
     wp_send_json_success($results);
+  }
+
+  public function ajax_search_terms()
+  {
+    check_ajax_referer('wpwc_search_posts', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_send_json_error('Unauthorized', 403);
+    }
+
+    $search   = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_key(wp_unslash($_POST['taxonomy'])) : '';
+
+    // Only taxonomies offered on the rules screen can be searched.
+    if (!array_key_exists($taxonomy, $this->get_available_taxonomies())) {
+      wp_send_json_error('Invalid taxonomy', 400);
+    }
+
+    $terms = get_terms(array(
+      'taxonomy'   => $taxonomy,
+      'search'     => $search,
+      'number'     => 20,
+      'hide_empty' => false,
+    ));
+
+    $results = array();
+    foreach (is_array($terms) ? $terms : array() as $term) {
+      $results[] = array('id' => (int) $term->term_id, 'title' => $term->name);
+    }
+
+    wp_send_json_success($results);
+  }
+
+  /**
+   * Options shown in the "Qual" field of the display rules, in screen order.
+   * Post types already used by a saved rule stay listed so no setting turns
+   * invisible.
+   *
+   * @return array ['archive' => [which => label], 'singular' => [post type => label]]
+   */
+  public function get_rule_choices(array $rules): array
+  {
+    $post_types = $this->get_available_post_types($rules);
+
+    $archive = array('all' => __('Todos os arquivos', 'wp-whatsapp-multi-chat'));
+
+    if ('page' === get_option('show_on_front') && (int) get_option('page_for_posts') > 0) {
+      $archive['blog'] = __('Página de posts (blog)', 'wp-whatsapp-multi-chat');
+    }
+
+    foreach ($post_types as $name => $type) {
+      if (empty($type->has_archive)) continue;
+      $archive['pta_' . $name] = sprintf(
+        /* translators: %s: post type plural name */
+        __('Arquivo de %s', 'wp-whatsapp-multi-chat'),
+        $type->labels->name
+      );
+    }
+
+    foreach ($this->get_available_taxonomies() as $name => $label) {
+      $archive['tax_' . $name] = $label;
+    }
+
+    $archive['author'] = __('Autores', 'wp-whatsapp-multi-chat');
+    $archive['date']   = __('Datas', 'wp-whatsapp-multi-chat');
+
+    $singular = array();
+    foreach ($post_types as $name => $type) {
+      $singular[$name] = $type->labels->name;
+    }
+
+    return array('archive' => $archive, 'singular' => $singular);
+  }
+
+  /**
+   * Title of the page, post or term chosen in a saved rule. `missing` flags an
+   * item deleted since, so the screen can show it as unavailable.
+   */
+  public function describe_item(string $which, int $item): array
+  {
+    if (0 === strpos($which, 'tax_')) {
+      $term = get_term($item, substr($which, 4));
+      if ($term && !is_wp_error($term)) {
+        return array('title' => $term->name, 'missing' => false);
+      }
+      return array('title' => '', 'missing' => true);
+    }
+
+    $post = get_post($item);
+    if ($post) {
+      return array('title' => get_the_title($post), 'missing' => false);
+    }
+    return array('title' => '', 'missing' => true);
+  }
+
+  private function get_saved_rules(): array
+  {
+    return WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(get_option(self::OPTION_KEY, array()));
   }
 
   public function render_options_page()
@@ -167,157 +272,109 @@ class WP_WhatsApp_Multi_Chat_Options
 
   public function tab_display_condition()
   {
-    $options = get_option(self::OPTION_KEY, array());
+    $discard_key = $this->discarded_transient_key();
+    $discarded   = (int) get_transient($discard_key);
+    if ($discarded > 0) {
+      delete_transient($discard_key);
+    }
 
-    $display_mode        = isset($options['display_mode']) ? $options['display_mode'] : 'manual';
-    $show_front_page     = !empty($options['show_front_page']);
-    $selected_post_types = isset($options['post_types']) ? (array) $options['post_types'] : array();
-    $selected_archives   = isset($options['archives']) ? (array) $options['archives'] : array();
-    $include_posts       = isset($options['include_posts']) ? array_map('absint', (array) $options['include_posts']) : array();
-    $exclude_posts       = isset($options['exclude_posts']) ? array_map('absint', (array) $options['exclude_posts']) : array();
-
-    $post_types        = $this->get_available_post_types();
-    $archives          = $this->get_available_archives();
-    $include_post_data = $this->get_posts_by_ids($include_posts);
-    $exclude_post_data = $this->get_posts_by_ids($exclude_posts);
+    $not_loaded = (bool) get_transient($this->not_loaded_transient_key());
+    if ($not_loaded) {
+      delete_transient($this->not_loaded_transient_key());
+    }
 
     $form_action = admin_url('admin-post.php');
     ?>
+    <?php if ($not_loaded) : ?>
+      <div class="notice notice-error is-dismissible">
+        <p><?php esc_html_e('A lista de regras não carregou e nada foi alterado. Recarregue a página e tente de novo.', 'wp-whatsapp-multi-chat'); ?></p>
+      </div>
+    <?php endif; ?>
+
+    <?php if ($discarded > 0) : ?>
+      <div class="notice notice-warning is-dismissible">
+        <p><?php echo esc_html(sprintf(
+          /* translators: %d: number of discarded rules */
+          _n('%d regra incompleta ou inválida foi descartada.', '%d regras incompletas ou inválidas foram descartadas.', $discarded, 'wp-whatsapp-multi-chat'),
+          $discarded
+        )); ?></p>
+      </div>
+    <?php endif; ?>
+
     <form method="post" action="<?php echo esc_url($form_action); ?>">
       <?php wp_nonce_field('wpwc_save_display_conditions', 'wpwc_nonce'); ?>
       <input type="hidden" name="action" value="wpwc_save_display_conditions">
 
-      <!-- ── Section: Show widget on ─────────────────────────────── -->
       <div class="wpwc-section">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Exibir widget em', 'wp-whatsapp-multi-chat'); ?></h2>
+        <h2 class="wpwc-section-title"><?php esc_html_e('Regras de exibição', 'wp-whatsapp-multi-chat'); ?></h2>
+        <p class="wpwc-section-description"><?php esc_html_e('Regras de Ocultar sempre vencem as de Exibir.', 'wp-whatsapp-multi-chat'); ?></p>
 
-        <div class="wpwc-radio-group">
-          <label class="wpwc-radio-label">
-            <input type="radio" name="display_mode" value="everywhere"
-              <?php checked($display_mode, 'everywhere'); ?>>
-            <span class="wpwc-radio-text">
-              <?php esc_html_e('Site inteiro', 'wp-whatsapp-multi-chat'); ?>
-              <span class="wpwc-radio-desc"><?php esc_html_e('Exibir em todas as páginas do site.', 'wp-whatsapp-multi-chat'); ?></span>
-            </span>
-          </label>
+        <ol class="wpwc-rules" id="wpwc-rules"></ol>
+        <p class="wpwc-rules-empty" hidden><?php esc_html_e('Nenhuma regra: o widget não aparece em nenhuma página.', 'wp-whatsapp-multi-chat'); ?></p>
 
-          <label class="wpwc-radio-label">
-            <input type="radio" name="display_mode" value="manual"
-              <?php checked($display_mode, 'manual'); ?>>
-            <span class="wpwc-radio-text">
-              <?php esc_html_e('Seleção manual', 'wp-whatsapp-multi-chat'); ?>
-              <span class="wpwc-radio-desc"><?php esc_html_e('Escolha exatamente onde o widget será exibido.', 'wp-whatsapp-multi-chat'); ?></span>
-            </span>
-          </label>
-        </div>
+        <button type="button" class="button" id="wpwc-add-rule">
+          <?php esc_html_e('+ Adicionar regra', 'wp-whatsapp-multi-chat'); ?>
+        </button>
+      </div>
 
-        <div class="wpwc-manual-conditions<?php echo 'everywhere' === $display_mode ? ' is-hidden' : ''; ?>">
-
-          <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Página inicial', 'wp-whatsapp-multi-chat'); ?></div>
-            <div class="wpwc-condition-control">
-              <label class="wpwc-checkbox-label">
-                <input type="checkbox" name="show_front_page" value="1" <?php checked($show_front_page); ?>>
-                <?php esc_html_e('Página inicial', 'wp-whatsapp-multi-chat'); ?>
-              </label>
-            </div>
-          </div>
-
-          <?php if (!empty($post_types)) : ?>
-          <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Tipos de post', 'wp-whatsapp-multi-chat'); ?></div>
-            <div class="wpwc-condition-control">
-              <fieldset>
-                <legend class="screen-reader-text"><?php esc_html_e('Tipos de post', 'wp-whatsapp-multi-chat'); ?></legend>
-                <?php foreach ($post_types as $pt) : ?>
-                <label class="wpwc-checkbox-label">
-                  <input type="checkbox" name="post_types[]" value="<?php echo esc_attr($pt->name); ?>"
-                    <?php checked(in_array($pt->name, $selected_post_types, true)); ?>>
-                  <?php echo esc_html($pt->labels->name); ?>
-                  <span class="wpwc-slug-label"><?php echo esc_html($pt->name); ?></span>
-                </label>
-                <?php endforeach; ?>
-              </fieldset>
-              <p class="description"><?php esc_html_e('Exibir em posts individuais dos tipos selecionados.', 'wp-whatsapp-multi-chat'); ?></p>
-            </div>
-          </div>
-          <?php endif; ?>
-
-          <?php if (!empty($archives)) : ?>
-          <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Páginas de arquivo', 'wp-whatsapp-multi-chat'); ?></div>
-            <div class="wpwc-condition-control">
-              <fieldset>
-                <legend class="screen-reader-text"><?php esc_html_e('Arquivos', 'wp-whatsapp-multi-chat'); ?></legend>
-                <?php foreach ($archives as $key => $label) : ?>
-                <label class="wpwc-checkbox-label">
-                  <input type="checkbox" name="archives[]" value="<?php echo esc_attr($key); ?>"
-                    <?php checked(in_array($key, $selected_archives, true)); ?>>
-                  <?php echo esc_html($label); ?>
-                </label>
-                <?php endforeach; ?>
-              </fieldset>
-              <p class="description"><?php esc_html_e('Exibir nas páginas de arquivo / especiais selecionadas.', 'wp-whatsapp-multi-chat'); ?></p>
-            </div>
-          </div>
-          <?php endif; ?>
-
-          <div class="wpwc-condition-row">
-            <div class="wpwc-condition-label"><?php esc_html_e('Páginas / posts específicos', 'wp-whatsapp-multi-chat'); ?></div>
-            <div class="wpwc-condition-control">
-              <div class="wpwc-post-selector" data-field="include_posts">
-                <div class="wpwc-search-wrap">
-                  <input type="text" class="wpwc-search-input regular-text"
-                         placeholder="<?php esc_attr_e('Buscar páginas ou posts…', 'wp-whatsapp-multi-chat'); ?>"
-                         autocomplete="off">
-                  <div class="wpwc-search-results" hidden></div>
-                </div>
-                <ul class="wpwc-selected-items">
-                  <?php foreach ($include_post_data as $item) : ?>
-                  <li data-id="<?php echo esc_attr($item['id']); ?>">
-                    <span class="wpwc-item-title"><?php echo esc_html($item['title']); ?></span>
-                    <span class="wpwc-type-label"><?php echo esc_html($item['type']); ?></span>
-                    <button type="button" class="wpwc-remove-item button-link" aria-label="<?php esc_attr_e('Remover', 'wp-whatsapp-multi-chat'); ?>">&times;</button>
-                    <input type="hidden" name="include_posts[]" value="<?php echo esc_attr($item['id']); ?>">
-                  </li>
-                  <?php endforeach; ?>
-                </ul>
-              </div>
-              <p class="description"><?php esc_html_e('Sempre exibir nestas páginas ou posts (acumulado às condições acima).', 'wp-whatsapp-multi-chat'); ?></p>
-            </div>
-          </div>
-
-        </div><!-- /.wpwc-manual-conditions -->
-      </div><!-- /.wpwc-section -->
-
-      <!-- ── Section: Exceptions ─────────────────────────────────── -->
-      <div class="wpwc-section wpwc-section-exceptions">
-        <h2 class="wpwc-section-title"><?php esc_html_e('Exceções — nunca exibir em', 'wp-whatsapp-multi-chat'); ?></h2>
-        <p class="wpwc-section-description"><?php esc_html_e('O widget ficará oculto nestas páginas independentemente das regras acima.', 'wp-whatsapp-multi-chat'); ?></p>
-
-        <div class="wpwc-post-selector" data-field="exclude_posts">
-          <div class="wpwc-search-wrap">
-            <input type="text" class="wpwc-search-input regular-text"
-                   placeholder="<?php esc_attr_e('Search pages or posts…', 'wp-whatsapp-multi-chat'); ?>"
-                   autocomplete="off">
-            <div class="wpwc-search-results" hidden></div>
-          </div>
-          <ul class="wpwc-selected-items">
-            <?php foreach ($exclude_post_data as $item) : ?>
-            <li data-id="<?php echo esc_attr($item['id']); ?>">
-              <span class="wpwc-item-title"><?php echo esc_html($item['title']); ?></span>
-              <span class="wpwc-type-label"><?php echo esc_html($item['type']); ?></span>
-              <button type="button" class="wpwc-remove-item button-link" aria-label="<?php esc_attr_e('Remove', 'wp-whatsapp-multi-chat'); ?>">&times;</button>
-              <input type="hidden" name="exclude_posts[]" value="<?php echo esc_attr($item['id']); ?>">
-            </li>
-            <?php endforeach; ?>
-          </ul>
-        </div>
-      </div><!-- /.wpwc-section -->
-
-      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
+      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat'), 'primary', 'submit', true, array('disabled' => 'disabled', 'id' => 'wpwc-rules-submit')); ?>
     </form>
     <?php
+  }
+
+  /**
+   * Data the rules screen script needs: the saved rules (with the title of
+   * each chosen item) and the options of every field.
+   */
+  private function get_rules_screen_data(): array
+  {
+    $rules = $this->get_saved_rules();
+
+    $saved = array();
+    foreach ($rules as $rule) {
+      $described = array('title' => '', 'missing' => false);
+      if ($rule['item'] > 0) {
+        $described = $this->describe_item($rule['which'], $rule['item']);
+      }
+      $saved[] = array_merge($rule, $described);
+    }
+
+    return array(
+      'saved'   => $saved,
+      'choices' => $this->get_rule_choices($rules),
+      'where'   => array(
+        'entire_site' => __('Site inteiro', 'wp-whatsapp-multi-chat'),
+        'front_page'  => __('Página inicial', 'wp-whatsapp-multi-chat'),
+        'archive'     => __('Arquivos', 'wp-whatsapp-multi-chat'),
+        'singular'    => __('Individuais', 'wp-whatsapp-multi-chat'),
+        'search'      => __('Busca', 'wp-whatsapp-multi-chat'),
+        '404'         => __('Página 404', 'wp-whatsapp-multi-chat'),
+      ),
+      'i18n'    => array(
+        'show'        => __('Exibir', 'wp-whatsapp-multi-chat'),
+        'hide'        => __('Ocultar', 'wp-whatsapp-multi-chat'),
+        'action'      => __('Ação', 'wp-whatsapp-multi-chat'),
+        'whereLabel'  => __('Onde', 'wp-whatsapp-multi-chat'),
+        'which'       => __('Qual', 'wp-whatsapp-multi-chat'),
+        'item'        => __('Item', 'wp-whatsapp-multi-chat'),
+        'all'         => __('Todos', 'wp-whatsapp-multi-chat'),
+        'searchHint'  => __('Todos — digite para escolher um item', 'wp-whatsapp-multi-chat'),
+        'unavailable' => __('Item indisponível (ID %d)', 'wp-whatsapp-multi-chat'),
+        'unknown'     => __('Opção indisponível (%s)', 'wp-whatsapp-multi-chat'),
+        'remove'      => __('Remover regra', 'wp-whatsapp-multi-chat'),
+        'pending'     => __('Escolha um item da lista ou apague o texto para valer para todos.', 'wp-whatsapp-multi-chat'),
+      ),
+    );
+  }
+
+  private function discarded_transient_key(): string
+  {
+    return 'wpwc_display_rules_discarded_' . get_current_user_id();
+  }
+
+  private function not_loaded_transient_key(): string
+  {
+    return 'wpwc_display_rules_not_loaded_' . get_current_user_id();
   }
 
   public function tab_appearance()
@@ -1010,24 +1067,36 @@ class WP_WhatsApp_Multi_Chat_Options
       wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
     }
 
-    $options = array(
-      'display_mode'    => (isset($_POST['display_mode']) && 'everywhere' === $_POST['display_mode']) ? 'everywhere' : 'manual',
-      'show_front_page' => isset($_POST['show_front_page']) ? 1 : 0,
-      'post_types'      => isset($_POST['post_types'])
-        ? array_map('sanitize_key', (array) wp_unslash($_POST['post_types']))
-        : array(),
-      'archives'        => isset($_POST['archives'])
-        ? array_map('sanitize_key', (array) wp_unslash($_POST['archives']))
-        : array(),
-      'include_posts'   => isset($_POST['include_posts'])
-        ? array_map('absint', (array) wp_unslash($_POST['include_posts']))
-        : array(),
-      'exclude_posts'   => isset($_POST['exclude_posts'])
-        ? array_map('absint', (array) wp_unslash($_POST['exclude_posts']))
-        : array(),
+    $redirect = admin_url(
+      'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
+      . '&page=wp-whatsapp-multi-chat-options&tab=display_condition'
     );
 
-    update_option(self::OPTION_KEY, $options);
+    // The rules list is drawn by the screen script. Without its marker the
+    // list never loaded, and saving would wipe every rule (hiding the widget).
+    if (empty($_POST['wpwc_rules_ready'])) {
+      set_transient($this->not_loaded_transient_key(), 1, 60);
+      wp_safe_redirect($redirect);
+      exit;
+    }
+
+    $raw = isset($_POST['rules']) && is_array($_POST['rules']) ? wp_unslash($_POST['rules']) : array();
+
+    // Saved rules whose option no longer exists stay valid until the admin removes them.
+    $saved_rules = $this->get_saved_rules();
+    $choices     = $this->get_rule_choices($saved_rules);
+    $allowed     = array('archive' => array_keys($choices['archive']), 'singular' => array_keys($choices['singular']));
+    foreach ($saved_rules as $rule) {
+      if (isset($allowed[$rule['where']])) $allowed[$rule['where']][] = $rule['which'];
+    }
+
+    $result = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array_values($raw), $allowed);
+
+    update_option(self::OPTION_KEY, WP_WhatsApp_Multi_Chat_Display_Rules::to_stored($result['rules']));
+
+    if ($result['discarded'] > 0) {
+      set_transient($this->discarded_transient_key(), $result['discarded'], 60);
+    }
 
     $redirect = admin_url(
       'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
@@ -1038,59 +1107,46 @@ class WP_WhatsApp_Multi_Chat_Options
     exit;
   }
 
-  private function get_available_post_types()
+  /**
+   * Post types visitors can reach: public and shown in menus. This leaves out
+   * builder templates and similar internal types. Types used by a saved rule
+   * are kept so that rule stays visible on screen.
+   */
+  private function get_available_post_types(array $rules = array()): array
   {
-    $post_types = get_post_types(array('public' => true), 'objects');
-    unset($post_types['attachment']);
-    return $post_types;
+    $used = array();
+    foreach ($rules as $rule) {
+      if ('singular' === $rule['where']) $used[] = $rule['which'];
+    }
+
+    $post_types = array();
+    foreach (get_post_types(array('public' => true), 'objects') as $name => $type) {
+      if ('attachment' === $name) continue;
+      if (empty($type->show_in_nav_menus) && !in_array($name, $used, true)) continue;
+      $post_types[$name] = $type;
+    }
+
+    return apply_filters('wpwc_display_post_types', $post_types);
   }
 
-  private function get_available_archives()
+  /**
+   * Public taxonomies with term archives, Categories and Tags first.
+   *
+   * @return array [taxonomy => label]
+   */
+  private function get_available_taxonomies(): array
   {
-    $archives = array(
-      'category' => __('Arquivo de Categorias', 'wp-whatsapp-multi-chat'),
-      'tag'      => __('Arquivo de Tags', 'wp-whatsapp-multi-chat'),
-      'author'   => __('Arquivo de Autores', 'wp-whatsapp-multi-chat'),
-      'date'     => __('Arquivo por Data', 'wp-whatsapp-multi-chat'),
-      'search'   => __('Resultados de Busca', 'wp-whatsapp-multi-chat'),
-      '404'      => __('Página 404', 'wp-whatsapp-multi-chat'),
+    $taxonomies = array(
+      'category' => __('Categorias', 'wp-whatsapp-multi-chat'),
+      'post_tag' => __('Tags', 'wp-whatsapp-multi-chat'),
     );
 
-    $taxonomies = get_taxonomies(array('public' => true, '_builtin' => false), 'objects');
-    foreach ($taxonomies as $taxonomy) {
-      $archives['tax_' . $taxonomy->name] = sprintf(
-        /* translators: %s: taxonomy name */
-        __('Arquivo de %s', 'wp-whatsapp-multi-chat'),
-        $taxonomy->labels->name
-      );
+    foreach (get_taxonomies(array('public' => true, 'publicly_queryable' => true), 'objects') as $name => $taxonomy) {
+      if (isset($taxonomies[$name])) continue;
+      $taxonomies[$name] = $taxonomy->labels->name;
     }
 
-    return $archives;
-  }
-
-  private function get_posts_by_ids(array $ids)
-  {
-    if (empty($ids)) return array();
-
-    $posts = get_posts(array(
-      'post__in'    => $ids,
-      'post_type'   => 'any',
-      'post_status' => 'publish',
-      'numberposts' => -1,
-      'orderby'     => 'post__in',
-    ));
-
-    $results = array();
-    foreach ($posts as $post) {
-      $pt = get_post_type_object($post->post_type);
-      $results[] = array(
-        'id'    => $post->ID,
-        'title' => get_the_title($post),
-        'type'  => $pt ? $pt->labels->singular_name : $post->post_type,
-      );
-    }
-
-    return $results;
+    return $taxonomies;
   }
 
   public static function get_instance()

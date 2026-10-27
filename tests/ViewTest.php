@@ -112,381 +112,129 @@ class ViewTest extends WPWC_TestCase
     $this->assertSame('', $result[0]['thumbnail']);
   }
 
-  public function test_should_display_everywhere_mode(): void
+  /* ── Display rules ──────────────────────────────────── */
+
+  // Todas as condicionais do WordPress começam falsas; cada teste liga só as que precisa.
+  private function stub_conditionals(array $overrides = []): void
   {
-    Functions\expect('get_option')
-      ->andReturn([
-        'display_mode'    => 'everywhere',
-        'exclude_posts'   => [],
-        'include_posts'   => [],
-        'show_front_page' => 0,
-        'post_types'      => [],
-        'archives'        => [],
-      ]);
-
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) {
-        return array_merge($defaults, $args);
-      },
-      'is_singular' => false,
-      'get_the_ID'  => 0,
-    ]);
-
-    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
-
-    // Reset cache via reflection
-    $prop = new ReflectionProperty($instance, 'display_cached');
-    $prop->setValue($instance, null);
-
-    $method = new ReflectionMethod($instance, 'should_display');
-
-    $this->assertTrue($method->invoke($instance));
+    $defaults = [
+      'is_front_page'         => false,
+      'is_home'               => false,
+      'is_archive'            => false,
+      'is_post_type_archive'  => false,
+      'is_author'             => false,
+      'is_date'               => false,
+      'is_category'           => false,
+      'is_tag'                => false,
+      'is_tax'                => false,
+      'is_singular'           => false,
+      'is_search'             => false,
+      'is_404'                => false,
+      'get_queried_object'    => null,
+      'get_queried_object_id' => 0,
+      'get_post_type'         => false,
+      'get_query_var'         => '',
+    ];
+    foreach (array_merge($defaults, $overrides) as $fn => $value) {
+      Functions\when($fn)->justReturn($value);
+    }
   }
 
-  public function test_should_display_exclusion_wins_over_everywhere(): void
+  private function make_display_instance($stored): WP_WhatsApp_Multi_Chat_View
   {
-    Functions\expect('get_option')
-      ->andReturn([
-        'display_mode'    => 'everywhere',
-        'exclude_posts'   => [42],
-        'include_posts'   => [],
-        'show_front_page' => 0,
-        'post_types'      => [],
-        'archives'        => [],
-      ]);
-
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) {
-        return array_merge($defaults, $args);
-      },
-      'is_singular' => true,
-      'get_the_ID'  => 42,
-    ]);
-
-    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
-
-    $prop = new ReflectionProperty($instance, 'display_cached');
-    $prop->setValue($instance, null);
-
-    $method = new ReflectionMethod($instance, 'should_display');
-
-    $this->assertFalse($method->invoke($instance));
-  }
-
-  public function test_should_display_include_overrides_manual(): void
-  {
-    Functions\expect('get_option')
-      ->andReturn([
-        'display_mode'    => 'manual',
-        'exclude_posts'   => [],
-        'include_posts'   => [99],
-        'show_front_page' => 0,
-        'post_types'      => [],
-        'archives'        => [],
-      ]);
-
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) {
-        return array_merge($defaults, $args);
-      },
-      'is_singular' => true,
-      'get_the_ID'  => 99,
-    ]);
-
-    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
-
-    $prop = new ReflectionProperty($instance, 'display_cached');
-    $prop->setValue($instance, null);
-
-    $method = new ReflectionMethod($instance, 'should_display');
-
-    $this->assertTrue($method->invoke($instance));
-  }
-
-  public function test_should_display_manual_no_match_returns_false(): void
-  {
-    Functions\expect('get_option')
-      ->andReturn([
-        'display_mode'    => 'manual',
-        'exclude_posts'   => [],
-        'include_posts'   => [],
-        'show_front_page' => 0,
-        'post_types'      => [],
-        'archives'        => [],
-      ]);
-
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) {
-        return array_merge($defaults, $args);
-      },
-      'is_singular'   => false,
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-    ]);
-
-    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
-
-    $prop = new ReflectionProperty($instance, 'display_cached');
-    $prop->setValue($instance, null);
-
-    $method = new ReflectionMethod($instance, 'should_display');
-
-    $this->assertFalse($method->invoke($instance));
-  }
-
-  #[PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
-  public function test_should_display_caches_result(): void
-  {
-    Functions\expect('get_option')
-      ->once()  // Should only be called once due to cache
-      ->andReturn([
-        'display_mode'    => 'everywhere',
-        'exclude_posts'   => [],
-        'include_posts'   => [],
-        'show_front_page' => 0,
-        'post_types'      => [],
-        'archives'        => [],
-      ]);
-
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) {
-        return array_merge($defaults, $args);
-      },
-      'is_singular' => false,
-      'get_the_ID'  => 0,
-    ]);
-
-    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
-
-    $prop = new ReflectionProperty($instance, 'display_cached');
-    $prop->setValue($instance, null);
-
-    $method = new ReflectionMethod($instance, 'should_display');
-
-    // Call twice
-    $method->invoke($instance);
-    $method->invoke($instance);
-  }
-
-  /* ── Helper ─────────────────────────────────────────── */
-
-  private function make_display_instance(array $conditions): WP_WhatsApp_Multi_Chat_View
-  {
-    Functions\expect('get_option')->andReturn($conditions);
-    Functions\stubs([
-      'wp_parse_args' => function ($args, $defaults) { return array_merge($defaults, $args); },
-    ]);
-
+    Functions\when('get_option')->justReturn($stored);
     $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
     (new ReflectionProperty($instance, 'display_cached'))->setValue($instance, null);
     return $instance;
   }
 
-  private function invoke_should_display(WP_WhatsApp_Multi_Chat_View $instance): bool
+  private function invoke_private(WP_WhatsApp_Multi_Chat_View $instance, string $method, ...$args)
   {
-    return (new ReflectionMethod($instance, 'should_display'))->invoke($instance);
+    return (new ReflectionMethod($instance, $method))->invoke($instance, ...$args);
   }
 
-  /* ── show_front_page ─────────────────────────────────── */
-
-  public function test_should_display_front_page_when_enabled(): void
+  // Sites que ainda têm a configuração antiga continuam com o mesmo resultado.
+  public function test_should_display_uses_converted_legacy_option(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'manual',
-      'show_front_page' => 1,
-      'post_types'      => [],
-      'archives'        => [],
-      'include_posts'   => [],
-      'exclude_posts'   => [],
+    $this->stub_conditionals([
+      'is_singular'           => true,
+      'get_post_type'         => 'post',
+      'get_queried_object_id' => 42,
     ]);
+    $instance = $this->make_display_instance(['display_mode' => 'everywhere', 'exclude_posts' => [42]]);
 
-    Functions\stubs([
-      'is_singular'   => false,
-      'get_the_ID'    => 0,
-      'is_front_page' => true,
-    ]);
-
-    $this->assertTrue($this->invoke_should_display($instance));
+    $this->assertFalse($this->invoke_private($instance, 'should_display'));
   }
 
-  public function test_should_display_front_page_when_disabled(): void
+  public function test_should_display_v2_hides_post_type_archive(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'manual',
-      'show_front_page' => 0,
-      'post_types'      => [],
-      'archives'        => [],
-      'include_posts'   => [],
-      'exclude_posts'   => [],
+    $this->stub_conditionals([
+      'is_archive'           => true,
+      'is_post_type_archive' => true,
+      'get_query_var'        => 'cases',
     ]);
+    $instance = $this->make_display_instance(['version' => 2, 'rules' => [
+      ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => 0],
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_cases', 'item' => 0],
+    ]]);
 
-    Functions\stubs([
-      'is_singular'   => false,
-      'get_the_ID'    => 0,
-      'is_front_page' => true,
-    ]);
-
-    $this->assertFalse($this->invoke_should_display($instance));
+    $this->assertFalse($this->invoke_private($instance, 'should_display'));
   }
 
-  /* ── post_types ──────────────────────────────────────── */
-
-  public function test_should_display_matching_post_type(): void
+  public function test_should_display_without_option_hides(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'  => 'manual',
-      'show_front_page' => 0,
-      'post_types'    => ['post', 'product'],
-      'archives'      => [],
-      'include_posts' => [],
-      'exclude_posts' => [],
-    ]);
+    $this->stub_conditionals(['is_front_page' => true]);
+    $instance = $this->make_display_instance(false);
 
-    Functions\stubs([
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-    ]);
-
-    Functions\when('is_singular')->alias(function ($types = '') {
-      // Called with no args → false; called with array containing 'post' → true
-      return !empty($types) && in_array('post', (array) $types, true);
-    });
-
-    $this->assertTrue($this->invoke_should_display($instance));
+    $this->assertFalse($this->invoke_private($instance, 'should_display'));
   }
 
-  public function test_should_display_non_matching_post_type(): void
+  #[PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
+  public function test_should_display_caches_result(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'  => 'manual',
-      'show_front_page' => 0,
-      'post_types'    => ['product'],
-      'archives'      => [],
-      'include_posts' => [],
-      'exclude_posts' => [],
-    ]);
+    $this->stub_conditionals();
+    Functions\expect('get_option')->once()->andReturn(['display_mode' => 'everywhere']);
 
-    Functions\stubs([
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-    ]);
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+    (new ReflectionProperty($instance, 'display_cached'))->setValue($instance, null);
 
-    Functions\when('is_singular')->alias(function ($types = '') {
-      // 'post' is not in the post_types list
-      return false;
-    });
-
-    $this->assertFalse($this->invoke_should_display($instance));
+    $this->invoke_private($instance, 'should_display');
+    $this->invoke_private($instance, 'should_display');
   }
 
-  /* ── archives ────────────────────────────────────────── */
-
-  #[PHPUnit\Framework\Attributes\DataProvider('archiveProvider')]
-  public function test_should_display_archive_types(string $archive_key, string $wp_function): void
+  // A página de posts só conta como "blog" quando é separada da página inicial.
+  public function test_build_context_blog_only_when_separate(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'manual',
-      'show_front_page' => 0,
-      'post_types'      => [],
-      'archives'        => [$archive_key],
-      'include_posts'   => [],
-      'exclude_posts'   => [],
-    ]);
+    $this->stub_conditionals(['is_home' => true]);
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+    $this->assertTrue($this->invoke_private($instance, 'build_context')['blog']);
 
-    Functions\when('is_singular')->justReturn(false);
-    Functions\stubs([
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-    ]);
-
-    // Make the matching archive function return true, all others false
-    foreach (['is_category', 'is_tag', 'is_author', 'is_date', 'is_search', 'is_404'] as $fn) {
-      Functions\when($fn)->justReturn($fn === $wp_function);
-    }
-
-    $this->assertTrue($this->invoke_should_display($instance));
+    $this->stub_conditionals(['is_home' => true, 'is_front_page' => true]);
+    $context = $this->invoke_private($instance, 'build_context');
+    $this->assertFalse($context['blog']);
+    $this->assertTrue($context['front_page']);
   }
 
-  public static function archiveProvider(): array
+  public function test_build_context_term_archive(): void
   {
-    return [
-      'category' => ['category', 'is_category'],
-      'tag'      => ['tag',      'is_tag'],
-      'author'   => ['author',   'is_author'],
-      'date'     => ['date',     'is_date'],
-      'search'   => ['search',   'is_search'],
-      '404'      => ['404',      'is_404'],
-    ];
+    $term = (object) ['taxonomy' => 'category', 'term_id' => 7];
+    $this->stub_conditionals(['is_archive' => true, 'is_category' => true, 'get_queried_object' => $term]);
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
+
+    $context = $this->invoke_private($instance, 'build_context');
+
+    $this->assertSame('category', $context['tax']);
+    $this->assertSame(7, $context['term']);
   }
 
-  public function test_should_display_archive_not_active_returns_false(): void
+  public function test_build_context_post_type_archive_with_array_query_var(): void
   {
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'manual',
-      'show_front_page' => 0,
-      'post_types'      => [],
-      'archives'        => ['category'],
-      'include_posts'   => [],
-      'exclude_posts'   => [],
-    ]);
+    $this->stub_conditionals(['is_archive' => true, 'is_post_type_archive' => true, 'get_query_var' => ['acos', 'cases']]);
+    $instance = WP_WhatsApp_Multi_Chat_View::get_instance();
 
-    Functions\when('is_singular')->justReturn(false);
-    Functions\stubs([
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-      'is_category'   => false,
-    ]);
-
-    $this->assertFalse($this->invoke_should_display($instance));
+    $this->assertSame('acos', $this->invoke_private($instance, 'build_context')['pta']);
   }
 
-  /* ── custom taxonomy archive ─────────────────────────── */
-
-  public function test_should_display_custom_taxonomy_archive(): void
-  {
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'manual',
-      'show_front_page' => 0,
-      'post_types'      => [],
-      'archives'        => ['tax_genre'],
-      'include_posts'   => [],
-      'exclude_posts'   => [],
-    ]);
-
-    Functions\when('is_singular')->justReturn(false);
-    Functions\stubs([
-      'get_the_ID'    => 0,
-      'is_front_page' => false,
-    ]);
-
-    Functions\when('is_tax')->alias(function ($taxonomy) {
-      return $taxonomy === 'genre';
-    });
-
-    $this->assertTrue($this->invoke_should_display($instance));
-  }
-
-  /* ── exclusion overrides everywhere ─────────────────── */
-
-  public function test_exclusion_wins_over_include(): void
-  {
-    // A post that is both in include and exclude → exclude wins
-    $instance = $this->make_display_instance([
-      'display_mode'    => 'everywhere',
-      'show_front_page' => 0,
-      'post_types'      => [],
-      'archives'        => [],
-      'include_posts'   => [5],
-      'exclude_posts'   => [5],
-    ]);
-
-    Functions\stubs([
-      'is_singular' => true,
-      'get_the_ID'  => 5,
-    ]);
-
-    $this->assertFalse($this->invoke_should_display($instance));
-  }
   /* ── Business hours payload ─────────────────────────────────────── */
 
   public function test_get_accounts_includes_schedule_for_general_mode(): void
