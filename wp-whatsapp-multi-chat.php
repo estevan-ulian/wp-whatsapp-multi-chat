@@ -3,7 +3,7 @@
 /**
  * Plugin Name: WhatsApp Multi Chat
  * Description: A simple WhatsApp chat plugin for WordPress.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Estevan Ulian
  * Author URI: https://github.com/estevan-ulian
  * Plugin URI: https://github.com/estevan-ulian/wp-whatsapp-multi-chat
@@ -18,7 +18,7 @@
 if (!defined('ABSPATH')) exit;
 
 if (!defined('WP_WHATSAPP_MULTI_CHAT_VERSION')) {
-  define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.1.0');
+  define('WP_WHATSAPP_MULTI_CHAT_VERSION', '1.2.0');
 }
 
 if (!defined('WP_WHATSAPP_MULTI_CHAT_PLUGIN_FILE')) {
