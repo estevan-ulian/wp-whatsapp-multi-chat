@@ -528,4 +528,172 @@ class OptionsTest extends WPWC_TestCase
 
     $_POST = [];
   }
+
+  /* ── Display rule choices ───────────────────────────── */
+
+  private function post_type(string $name, string $label, bool $in_menus, $has_archive = false): object
+  {
+    return (object) [
+      'name'              => $name,
+      'labels'            => (object) ['name' => $label],
+      'show_in_nav_menus' => $in_menus,
+      'has_archive'       => $has_archive,
+    ];
+  }
+
+  private function stub_site(array $options = [], array $taxonomies = []): void
+  {
+    Functions\when('get_post_types')->justReturn([
+      'post'              => $this->post_type('post', 'Posts', true),
+      'page'              => $this->post_type('page', 'Páginas', true),
+      'attachment'        => $this->post_type('attachment', 'Mídia', true),
+      'elementor_library' => $this->post_type('elementor_library', 'Meus modelos', false),
+      'cases'             => $this->post_type('cases', 'Cases', true, true),
+    ]);
+    Functions\when('get_taxonomies')->justReturn($taxonomies);
+    Functions\when('get_option')->alias(function ($key, $default = false) use ($options) {
+      return array_key_exists($key, $options) ? $options[$key] : $default;
+    });
+  }
+
+  private function choices(array $rules = []): array
+  {
+    return WP_WhatsApp_Multi_Chat_Options::get_instance()->get_rule_choices($rules);
+  }
+
+  // Tipos internos (sem aparecer nos menus) e anexos ficam fora; um tipo já usado numa regra salva continua visível.
+  public function test_post_types_hide_internal_and_keep_used(): void
+  {
+    $this->stub_site();
+    $this->assertSame(['post' => 'Posts', 'page' => 'Páginas', 'cases' => 'Cases'], $this->choices()['singular']);
+
+    $used = [['action' => 'show', 'where' => 'singular', 'which' => 'elementor_library', 'item' => 0]];
+    $this->assertArrayHasKey('elementor_library', $this->choices($used)['singular']);
+  }
+
+  public function test_post_types_filter_applied(): void
+  {
+    $this->stub_site();
+    \Brain\Monkey\Filters\expectApplied('wpwc_display_post_types')->once()->andReturnUsing(function ($types) {
+      unset($types['cases']);
+      return $types;
+    });
+
+    $this->assertSame(['post' => 'Posts', 'page' => 'Páginas'], $this->choices()['singular']);
+  }
+
+  public function test_archive_choices_order_and_labels(): void
+  {
+    $this->stub_site(
+      ['show_on_front' => 'page', 'page_for_posts' => 12],
+      [
+        'category' => (object) ['name' => 'category', 'labels' => (object) ['name' => 'Categories']],
+        'post_tag' => (object) ['name' => 'post_tag', 'labels' => (object) ['name' => 'Tags']],
+        'steel'    => (object) ['name' => 'steel', 'labels' => (object) ['name' => 'Steel type']],
+      ]
+    );
+
+    $this->assertSame([
+      'all'          => 'Todos os arquivos',
+      'blog'         => 'Página de posts (blog)',
+      'pta_cases'    => 'Arquivo de Cases',
+      'tax_category' => 'Categorias',
+      'tax_post_tag' => 'Tags',
+      'tax_steel'    => 'Steel type',
+      'author'       => 'Autores',
+      'date'         => 'Datas',
+    ], $this->choices()['archive']);
+  }
+
+  // A página de posts só é oferecida quando o site tem uma separada da inicial.
+  public function test_choices_blog_only_with_posts_page(): void
+  {
+    $this->stub_site(['show_on_front' => 'posts', 'page_for_posts' => 0]);
+    $this->assertArrayNotHasKey('blog', $this->choices()['archive']);
+
+    $this->stub_site(['show_on_front' => 'page', 'page_for_posts' => 0]);
+    $this->assertArrayNotHasKey('blog', $this->choices()['archive']);
+  }
+
+  public function test_choices_pta_only_with_archive(): void
+  {
+    $this->stub_site();
+    $archive = $this->choices()['archive'];
+
+    $this->assertArrayHasKey('pta_cases', $archive);
+    $this->assertArrayNotHasKey('pta_post', $archive);
+    $this->assertArrayNotHasKey('pta_page', $archive);
+  }
+
+  /* ── Searches and saved item labels ─────────────────── */
+
+  public function test_search_terms_requires_capability(): void
+  {
+    Functions\expect('check_ajax_referer')->once()->with('wpwc_search_posts', 'nonce');
+    Functions\expect('current_user_can')->with('manage_options')->andReturn(false);
+    Functions\expect('get_terms')->never();
+    Functions\expect('wp_send_json_error')->once()->andReturnUsing(function () {
+      throw new \RuntimeException('json error');
+    });
+
+    $this->expectException(\RuntimeException::class);
+    WP_WhatsApp_Multi_Chat_Options::get_instance()->ajax_search_terms();
+  }
+
+  #[PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
+  public function test_search_terms_returns_terms_of_listed_taxonomy(): void
+  {
+    $this->stub_site([], ['category' => (object) ['name' => 'category', 'labels' => (object) ['name' => 'Categories']]]);
+    Functions\when('check_ajax_referer')->justReturn(true);
+    Functions\when('current_user_can')->justReturn(true);
+    Functions\when('sanitize_text_field')->returnArg();
+    Functions\when('wp_unslash')->returnArg();
+    Functions\when('sanitize_key')->returnArg();
+    Functions\expect('get_terms')->once()->andReturn([(object) ['term_id' => 5, 'name' => 'Notícias']]);
+    Functions\expect('wp_send_json_success')->once()->with([['id' => 5, 'title' => 'Notícias']]);
+
+    $_POST = ['taxonomy' => 'category', 'search' => 'not'];
+    WP_WhatsApp_Multi_Chat_Options::get_instance()->ajax_search_terms();
+    $_POST = [];
+  }
+
+  // A busca de itens só aceita tipos que a tela oferece.
+  public function test_search_posts_rejects_unlisted_type(): void
+  {
+    $this->stub_site();
+    Functions\when('check_ajax_referer')->justReturn(true);
+    Functions\when('current_user_can')->justReturn(true);
+    Functions\when('sanitize_text_field')->returnArg();
+    Functions\when('wp_unslash')->returnArg();
+    Functions\when('sanitize_key')->returnArg();
+    Functions\expect('wp_send_json_error')->once()->andReturnUsing(function () {
+      throw new \RuntimeException('json error');
+    });
+
+    $_POST = ['post_type' => 'elementor_library', 'search' => 'x'];
+    try {
+      $this->expectException(\RuntimeException::class);
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->ajax_search_posts();
+    } finally {
+      $_POST = [];
+    }
+  }
+
+  public function test_describe_item_post_term_and_missing(): void
+  {
+    Functions\when('get_post')->alias(function ($id) {
+      return 10 === $id ? (object) ['ID' => 10, 'post_status' => 'publish'] : null;
+    });
+    Functions\when('get_the_title')->justReturn('Contato');
+    Functions\when('get_term')->alias(function ($id) {
+      return 5 === $id ? (object) ['term_id' => 5, 'name' => 'Notícias'] : null;
+    });
+    Functions\when('is_wp_error')->justReturn(false);
+    $options = WP_WhatsApp_Multi_Chat_Options::get_instance();
+
+    $this->assertSame(['title' => 'Contato', 'missing' => false], $options->describe_item('page', 10));
+    $this->assertSame(['title' => 'Notícias', 'missing' => false], $options->describe_item('tax_category', 5));
+    $this->assertSame(['title' => '', 'missing' => true], $options->describe_item('page', 99));
+    $this->assertSame(['title' => '', 'missing' => true], $options->describe_item('tax_category', 99));
+  }
 }

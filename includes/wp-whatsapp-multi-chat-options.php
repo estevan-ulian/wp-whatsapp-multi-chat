@@ -17,6 +17,7 @@ class WP_WhatsApp_Multi_Chat_Options
     add_action('admin_menu', array($this, 'add_options_page'));
     add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
     add_action('wp_ajax_wpwc_search_posts', array($this, 'ajax_search_posts'));
+    add_action('wp_ajax_wpwc_search_terms', array($this, 'ajax_search_terms'));
     add_action('admin_post_wpwc_save_display_conditions', array($this, 'save_display_conditions'));
     add_action('admin_post_wpwc_save_appearance', array($this, 'save_appearance'));
     add_action('admin_post_wpwc_save_hours', array($this, 'save_hours'));
@@ -79,10 +80,16 @@ class WP_WhatsApp_Multi_Chat_Options
       wp_send_json_error('Unauthorized', 403);
     }
 
-    $search = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $search    = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'any';
+
+    // Only post types offered on the rules screen can be searched.
+    if ('any' !== $post_type && !array_key_exists($post_type, $this->get_available_post_types($this->get_saved_rules()))) {
+      wp_send_json_error('Invalid post type', 400);
+    }
 
     $query = new WP_Query(array(
-      'post_type'      => 'any',
+      'post_type'      => $post_type,
       'post_status'    => 'publish',
       's'              => $search,
       'posts_per_page' => 20,
@@ -100,6 +107,104 @@ class WP_WhatsApp_Multi_Chat_Options
     }
 
     wp_send_json_success($results);
+  }
+
+  public function ajax_search_terms()
+  {
+    check_ajax_referer('wpwc_search_posts', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_send_json_error('Unauthorized', 403);
+    }
+
+    $search   = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+    $taxonomy = isset($_POST['taxonomy']) ? sanitize_key(wp_unslash($_POST['taxonomy'])) : '';
+
+    // Only taxonomies offered on the rules screen can be searched.
+    if (!array_key_exists($taxonomy, $this->get_available_taxonomies())) {
+      wp_send_json_error('Invalid taxonomy', 400);
+    }
+
+    $terms = get_terms(array(
+      'taxonomy'   => $taxonomy,
+      'search'     => $search,
+      'number'     => 20,
+      'hide_empty' => false,
+    ));
+
+    $results = array();
+    foreach (is_array($terms) ? $terms : array() as $term) {
+      $results[] = array('id' => (int) $term->term_id, 'title' => $term->name);
+    }
+
+    wp_send_json_success($results);
+  }
+
+  /**
+   * Options shown in the "Qual" field of the display rules, in screen order.
+   * Post types already used by a saved rule stay listed so no setting turns
+   * invisible.
+   *
+   * @return array ['archive' => [which => label], 'singular' => [post type => label]]
+   */
+  public function get_rule_choices(array $rules): array
+  {
+    $post_types = $this->get_available_post_types($rules);
+
+    $archive = array('all' => __('Todos os arquivos', 'wp-whatsapp-multi-chat'));
+
+    if ('page' === get_option('show_on_front') && (int) get_option('page_for_posts') > 0) {
+      $archive['blog'] = __('Página de posts (blog)', 'wp-whatsapp-multi-chat');
+    }
+
+    foreach ($post_types as $name => $type) {
+      if (empty($type->has_archive)) continue;
+      $archive['pta_' . $name] = sprintf(
+        /* translators: %s: post type plural name */
+        __('Arquivo de %s', 'wp-whatsapp-multi-chat'),
+        $type->labels->name
+      );
+    }
+
+    foreach ($this->get_available_taxonomies() as $name => $label) {
+      $archive['tax_' . $name] = $label;
+    }
+
+    $archive['author'] = __('Autores', 'wp-whatsapp-multi-chat');
+    $archive['date']   = __('Datas', 'wp-whatsapp-multi-chat');
+
+    $singular = array();
+    foreach ($post_types as $name => $type) {
+      $singular[$name] = $type->labels->name;
+    }
+
+    return array('archive' => $archive, 'singular' => $singular);
+  }
+
+  /**
+   * Title of the page, post or term chosen in a saved rule. `missing` flags an
+   * item deleted since, so the screen can show it as unavailable.
+   */
+  public function describe_item(string $which, int $item): array
+  {
+    if (0 === strpos($which, 'tax_')) {
+      $term = get_term($item, substr($which, 4));
+      if ($term && !is_wp_error($term)) {
+        return array('title' => $term->name, 'missing' => false);
+      }
+      return array('title' => '', 'missing' => true);
+    }
+
+    $post = get_post($item);
+    if ($post) {
+      return array('title' => get_the_title($post), 'missing' => false);
+    }
+    return array('title' => '', 'missing' => true);
+  }
+
+  private function get_saved_rules(): array
+  {
+    return WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(get_option(self::OPTION_KEY, array()));
   }
 
   public function render_options_page()
@@ -1038,11 +1143,46 @@ class WP_WhatsApp_Multi_Chat_Options
     exit;
   }
 
-  private function get_available_post_types()
+  /**
+   * Post types visitors can reach: public and shown in menus. This leaves out
+   * builder templates and similar internal types. Types used by a saved rule
+   * are kept so that rule stays visible on screen.
+   */
+  private function get_available_post_types(array $rules = array()): array
   {
-    $post_types = get_post_types(array('public' => true), 'objects');
-    unset($post_types['attachment']);
-    return $post_types;
+    $used = array();
+    foreach ($rules as $rule) {
+      if ('singular' === $rule['where']) $used[] = $rule['which'];
+    }
+
+    $post_types = array();
+    foreach (get_post_types(array('public' => true), 'objects') as $name => $type) {
+      if ('attachment' === $name) continue;
+      if (empty($type->show_in_nav_menus) && !in_array($name, $used, true)) continue;
+      $post_types[$name] = $type;
+    }
+
+    return apply_filters('wpwc_display_post_types', $post_types);
+  }
+
+  /**
+   * Public taxonomies with term archives, Categories and Tags first.
+   *
+   * @return array [taxonomy => label]
+   */
+  private function get_available_taxonomies(): array
+  {
+    $taxonomies = array(
+      'category' => __('Categorias', 'wp-whatsapp-multi-chat'),
+      'post_tag' => __('Tags', 'wp-whatsapp-multi-chat'),
+    );
+
+    foreach (get_taxonomies(array('public' => true, 'publicly_queryable' => true), 'objects') as $name => $taxonomy) {
+      if (isset($taxonomies[$name])) continue;
+      $taxonomies[$name] = $taxonomy->labels->name;
+    }
+
+    return $taxonomies;
   }
 
   private function get_available_archives()
