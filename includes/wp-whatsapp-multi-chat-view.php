@@ -65,6 +65,10 @@ class WP_WhatsApp_Multi_Chat_View
         'baseUrl'    => WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL . 'assets/frontend',
         'accounts'   => $this->get_accounts(),
         'appearance' => $this->maybe_translate_appearance($appearance),
+        // Business hours are evaluated in the browser against the site's
+        // timezone, so the status stays correct on cached pages.
+        'timezone'   => wp_timezone_string(),
+        'weekdays'   => $this->get_weekday_abbrevs(),
       )
     );
   }
@@ -233,10 +237,36 @@ class WP_WhatsApp_Multi_Chat_View
         'predefined_message' => (string) get_post_meta($post->ID, '_wpwc_predefined_message', true),
         'tagline'            => (string) get_post_meta($post->ID, '_wpwc_cargo', true),
         'thumbnail'          => $thumbnail_url ? (string) $thumbnail_url : '',
+        'availability'       => WP_WhatsApp_Multi_Chat_Hours::resolve_availability($post->ID),
       );
     }
 
     return $accounts;
+  }
+
+  /**
+   * Weekday abbreviations in the site language for the "Volta seg às 08:00"
+   * status, keyed like the stored schedule.
+   *
+   * @return array<string, string>
+   */
+  private function get_weekday_abbrevs(): array
+  {
+    global $wp_locale;
+
+    // WP_Locale numbers weekdays from 0 = Sunday.
+    $indexes  = array('mon' => 1, 'tue' => 2, 'wed' => 3, 'thu' => 4, 'fri' => 5, 'sat' => 6, 'sun' => 0);
+    $fallback = array('mon' => 'Mon', 'tue' => 'Tue', 'wed' => 'Wed', 'thu' => 'Thu', 'fri' => 'Fri', 'sat' => 'Sat', 'sun' => 'Sun');
+
+    if (!is_object($wp_locale)) {
+      return $fallback;
+    }
+
+    $abbrevs = array();
+    foreach (WP_WhatsApp_Multi_Chat_Hours::DAYS as $day) {
+      $abbrevs[$day] = (string) $wp_locale->get_weekday_abbrev($wp_locale->get_weekday($indexes[$day]));
+    }
+    return $abbrevs;
   }
 
   public static function get_instance()
