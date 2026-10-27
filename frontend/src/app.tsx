@@ -3,6 +3,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import './app.css';
 import { appConfig } from './config/config';
 import type { Account } from './config/config';
+import { getStatus, formatStatus, sortByStatus, allOffline } from './availability';
+import type { Availability, Status } from './availability';
+
+// Accounts saved before business hours existed are always online.
+const ALWAYS_ONLINE: Availability = { mode: 'always_online' };
+// Re-evaluated periodically so the status changes on time while the page stays open.
+const STATUS_REFRESH_MS = 30000;
 
 /* ------------------------------------------------------------------
    Icons
@@ -50,7 +57,9 @@ function iconSize(size: string): number {
 /* ------------------------------------------------------------------
    ContactItem
 ------------------------------------------------------------------ */
-function ContactItem({ name, number, predefined_message, tagline, thumbnail, index }: Account & { index: number }) {
+type ContactItemProps = Account & { index: number; status: Status; statusText: string | null };
+
+function ContactItem({ name, number, predefined_message, tagline, thumbnail, index, status, statusText }: ContactItemProps) {
   const { appearance } = appConfig;
   const displayName = name || number;
   const letterInitial = displayName.charAt(0).toUpperCase();
@@ -61,6 +70,7 @@ function ContactItem({ name, number, predefined_message, tagline, thumbnail, ind
       target="_blank"
       rel="noopener noreferrer"
       class="wpwc-contact"
+      layout
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
@@ -77,13 +87,21 @@ function ContactItem({ name, number, predefined_message, tagline, thumbnail, ind
           ? <img src={thumbnail} alt={displayName} class="wpwc-contact-avatar-img" />
           : letterInitial
         }
-        <span class="wpwc-contact-avatar-dot" />
+        <span
+          class={`wpwc-contact-avatar-dot${status.online ? '' : ' wpwc-contact-avatar-dot--offline'}`}
+          aria-hidden="true"
+        />
       </span>
       <span class="wpwc-contact-info">
         {tagline && (
           <span class="wpwc-contact-subtitle">{tagline}</span>
         )}
         <span class="wpwc-contact-name">{displayName}</span>
+        {statusText !== null && (
+          <span class={`wpwc-contact-status wpwc-contact-status--${status.online ? 'online' : 'offline'}`}>
+            {statusText}
+          </span>
+        )}
       </span>
       <span class="wpwc-contact-cta" style={{ color: appearance.color_bg }}>
         {appConfig.appearance.cta_text}
@@ -97,7 +115,7 @@ function ContactItem({ name, number, predefined_message, tagline, thumbnail, ind
    App
 ------------------------------------------------------------------ */
 export function App() {
-  const { appearance, accounts } = appConfig;
+  const { appearance, accounts, timezone, weekdays } = appConfig;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(Number(appearance.appear_delay) === 0);
@@ -110,6 +128,33 @@ export function App() {
       return () => clearTimeout(t);
     }
   }, []);
+
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const refresh = () => setNow(new Date());
+    // Browsers pause timers in background tabs; refresh as soon as the tab is visible again.
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    const t = setInterval(refresh, STATUS_REFRESH_MS);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
+  const statusTexts = {
+    online: appearance.status_online,
+    offline: appearance.status_offline,
+    back: appearance.status_back,
+    today: appearance.status_today,
+    tomorrow: appearance.status_tomorrow,
+  };
+  const entries = sortByStatus((accounts ?? []).map(a => ({
+    item: a,
+    status: getStatus(a.availability ?? ALWAYS_ONLINE, timezone, now),
+  })));
+  const everyoneOffline = allOffline(entries.map(e => e.status));
 
   // Close panel on outside click
   useEffect(() => {
@@ -168,7 +213,7 @@ export function App() {
         onClick={() => { setIsOpen(o => !o); setShowTooltip(false); }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        aria-label={appearance.aria_open}
+        aria-label={everyoneOffline ? `${appearance.aria_open} — ${appearance.status_offline}` : appearance.aria_open}
         aria-expanded={isOpen}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -199,6 +244,7 @@ export function App() {
         {appearance.button_style === 'icon-text' && (
           <span class="wpwc-btn-text">{appearance.button_text}</span>
         )}
+        {everyoneOffline && <span class="wpwc-btn-status" aria-hidden="true" />}
       </button>
 
       {/* Tooltip — AnimatePresence for smooth enter/exit */}
@@ -247,14 +293,22 @@ export function App() {
                 </span>
                 <span class="wpwc-panel-header-text">
                   <strong>{appearance.panel_title}</strong>
-                  <span>{appearance.panel_subtitle}</span>
+                  <span>{everyoneOffline && appearance.offline_subtitle ? appearance.offline_subtitle : appearance.panel_subtitle}</span>
                 </span>
               </div>
 
               {/* Contact list */}
               <div class="wpwc-panel-body">
-                {accounts && accounts.length > 0
-                  ? accounts.map((a, i) => <ContactItem key={a.id} {...a} index={i} />)
+                {entries.length > 0
+                  ? entries.map(({ item, status }, i) => (
+                      <ContactItem
+                        key={item.id}
+                        {...item}
+                        index={i}
+                        status={status}
+                        statusText={formatStatus(item.availability ?? ALWAYS_ONLINE, status, statusTexts, weekdays)}
+                      />
+                    ))
                   : <p class="wpwc-panel-empty">{appearance.empty_text}</p>
                 }
               </div>
