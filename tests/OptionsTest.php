@@ -100,96 +100,73 @@ class OptionsTest extends WPWC_TestCase
     $instance->save_display_conditions();
   }
 
-  public function test_save_display_conditions_defaults_to_manual(): void
+  /**
+   * Runs the save handler with $post and returns what was stored and any
+   * transient set, stopping at the redirect so exit() never runs.
+   */
+  private function run_save(array $post): array
   {
+    $this->stub_site();
     Functions\expect('check_admin_referer')->once();
-    Functions\expect('current_user_can')->andReturn(true);
+    Functions\when('current_user_can')->justReturn(true);
+    Functions\when('wp_unslash')->returnArg();
+    Functions\when('get_current_user_id')->justReturn(3);
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
 
-    Functions\stubs([
-      'sanitize_key' => function ($v) { return $v; },
-      'wp_unslash'   => function ($v) { return $v; },
-      'absint'       => function ($v) { return abs(intval($v)); },
-    ]);
+    $result = ['saved' => null, 'transient' => null];
+    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$result) {
+      $result['saved'] = [$key, $value];
+    });
+    Functions\when('set_transient')->alias(function ($key, $value, $ttl) use (&$result) {
+      $result['transient'] = [$key, $value, $ttl];
+    });
 
-    Functions\expect('wp_safe_redirect')
-      ->once()
-      ->andReturnUsing(function ($url) {
-        throw new WPWC_RedirectException($url);
-      });
-
-    $saved = null;
-    Functions\expect('update_option')
-      ->once()
-      ->andReturnUsing(function ($key, $value) use (&$saved) {
-        $saved = $value;
-      });
-
-    // No display_mode in POST → should default to 'manual'
-    $_POST = [];
-
+    $_POST = $post;
     try {
-      $instance = WP_WhatsApp_Multi_Chat_Options::get_instance();
-      $instance->save_display_conditions();
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_display_conditions();
     } catch (WPWC_RedirectException $e) {
       // Expected – prevents exit from running
+    } finally {
+      $_POST = [];
     }
 
-    $this->assertSame('manual', $saved['display_mode']);
-    $this->assertSame(0, $saved['show_front_page']);
-    $this->assertSame([], $saved['post_types']);
-    $this->assertSame([], $saved['archives']);
-    $this->assertSame([], $saved['include_posts']);
-    $this->assertSame([], $saved['exclude_posts']);
-
-    $_POST = [];
+    return $result;
   }
 
-  public function test_save_display_conditions_saves_everywhere(): void
+  public function test_save_stores_v2_rules(): void
   {
-    Functions\expect('check_admin_referer')->once();
-    Functions\expect('current_user_can')->andReturn(true);
+    $result = $this->run_save(['rules' => [
+      ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => ''],
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_cases', 'item' => ''],
+    ]]);
 
-    Functions\stubs([
-      'sanitize_key' => function ($v) { return $v; },
-      'wp_unslash'   => function ($v) { return $v; },
-      'absint'       => function ($v) { return abs(intval($v)); },
-    ]);
+    $this->assertSame(['wpwc_display_conditions', ['version' => 2, 'rules' => [
+      ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => 0],
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_cases', 'item' => 0],
+    ]]], $result['saved']);
+    $this->assertNull($result['transient']);
+  }
 
-    Functions\expect('wp_safe_redirect')
-      ->once()
-      ->andReturnUsing(function ($url) {
-        throw new WPWC_RedirectException($url);
-      });
+  // Linhas inválidas não são salvas e o admin é avisado da quantidade na próxima tela.
+  public function test_save_discarded_sets_transient(): void
+  {
+    $result = $this->run_save(['rules' => [
+      ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => ''],
+      ['action' => 'show', 'where' => 'singular', 'which' => 'elementor_library', 'item' => ''],
+    ]]);
 
-    $saved = null;
-    Functions\expect('update_option')
-      ->once()
-      ->andReturnUsing(function ($key, $value) use (&$saved) {
-        $saved = $value;
-      });
+    $this->assertCount(1, $result['saved'][1]['rules']);
+    $this->assertSame(['wpwc_display_rules_discarded_3', 1, 60], $result['transient']);
+  }
 
-    $_POST = [
-      'display_mode'    => 'everywhere',
-      'show_front_page' => '1',
-      'post_types'      => ['post', 'page'],
-      'include_posts'   => ['10', '20'],
-      'exclude_posts'   => ['5'],
-    ];
+  // Salvar sem nenhuma regra grava a lista vazia: o widget fica oculto em todo o site.
+  public function test_save_empty_list_stores_empty_rules(): void
+  {
+    $result = $this->run_save([]);
 
-    try {
-      $instance = WP_WhatsApp_Multi_Chat_Options::get_instance();
-      $instance->save_display_conditions();
-    } catch (WPWC_RedirectException $e) {
-      // Expected
-    }
-
-    $this->assertSame('everywhere', $saved['display_mode']);
-    $this->assertSame(1, $saved['show_front_page']);
-    $this->assertSame(['post', 'page'], $saved['post_types']);
-    $this->assertSame([10, 20], $saved['include_posts']);
-    $this->assertSame([5], $saved['exclude_posts']);
-
-    $_POST = [];
+    $this->assertSame(['wpwc_display_conditions', ['version' => 2, 'rules' => []]], $result['saved']);
   }
 
   public function test_save_appearance_validates_corner(): void
