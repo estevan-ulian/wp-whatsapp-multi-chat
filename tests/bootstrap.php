@@ -11,3 +11,4 @@ define('WP_WHATSAPP_MULTI_CHAT_PLUGIN_URL', 'https://example.com/wp-content/plug
 
 require_once dirname(__DIR__) . '/includes/wp-whatsapp-multi-chat-utils.php';
 require_once dirname(__DIR__) . '/includes/wp-whatsapp-multi-chat-hours.php';
+require_once dirname(__DIR__) . '/includes/wp-whatsapp-multi-chat-display-rules.php';
