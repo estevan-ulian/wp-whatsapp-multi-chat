@@ -101,28 +101,43 @@
     bindSearch($wrap, source);
   }
 
+  // Typed text only counts once a suggestion is chosen; an empty field means "Todos".
+  // Until then the field is pending and the form will not submit, so a half-typed
+  // name never turns into a rule for every item.
   function bindSearch($wrap, source) {
     var $input   = $wrap.find('.wpwc-rule-item-search');
     var $hidden  = $wrap.find('.wpwc-rule-item-id');
     var $results = $wrap.find('.wpwc-search-results');
+    var chosen   = $input.val();
     var timerId  = null;
 
+    function setPending(pending) {
+      $input.toggleClass('is-pending', pending).attr('aria-invalid', pending ? 'true' : null);
+      $wrap.find('.wpwc-rule-error').remove();
+    }
+
     function choose(id, title) {
+      chosen = title;
       $hidden.val(id);
       $input.val(title).removeClass('is-missing');
+      setPending(false);
       $results.attr('hidden', true);
+      $input.trigger('focus');
     }
 
     $input.on('input', function () {
       var val = $.trim($input.val());
       clearTimeout(timerId);
 
-      // An empty field means "Todos".
       if (val === '') {
+        chosen = '';
         $hidden.val(0);
+        setPending(false);
         $results.attr('hidden', true);
         return;
       }
+
+      setPending(val !== chosen);
       if (val.length < 2) return;
 
       timerId = setTimeout(function () {
@@ -149,7 +164,27 @@
 
     $input.on('keydown', function (e) {
       if (e.key === 'Escape') $results.attr('hidden', true);
+      // Enter picks the first suggestion instead of submitting the form.
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var $first = $results.is(':visible') ? $results.find('.wpwc-result-item').first() : $();
+        if ($first.length) $first.trigger('click');
+      }
     });
+  }
+
+  function blockPendingItems(e) {
+    var $pending = $list.find('.wpwc-rule-item-search.is-pending');
+    if (!$pending.length) return;
+
+    e.preventDefault();
+    $pending.each(function () {
+      var $wrap = $(this).closest('.wpwc-search-wrap');
+      if (!$wrap.find('.wpwc-rule-error').length) {
+        $('<span/>').addClass('wpwc-rule-error').attr('role', 'alert').text(data.i18n.pending).appendTo($wrap);
+      }
+    });
+    $pending.first().trigger('focus');
   }
 
   // Field names follow the row order so PHP receives rules[0..n].
@@ -173,6 +208,13 @@
       $list.append(buildRow(rule));
     });
     reindex();
+
+    // Tells PHP the list was drawn; without it, saving is refused instead of
+    // wiping every rule. Saving only becomes possible from here on.
+    var $form = $list.closest('form');
+    $form.append($('<input/>').attr({ type: 'hidden', name: 'wpwc_rules_ready', value: '1' }));
+    $form.on('submit', blockPendingItems);
+    $('#wpwc-rules-submit').prop('disabled', false);
 
     $('#wpwc-add-rule').on('click', function () {
       var $row = buildRow({ action: 'show', where: 'entire_site', which: '', item: 0 });

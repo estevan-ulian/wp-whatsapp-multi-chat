@@ -104,9 +104,9 @@ class OptionsTest extends WPWC_TestCase
    * Runs the save handler with $post and returns what was stored and any
    * transient set, stopping at the redirect so exit() never runs.
    */
-  private function run_save(array $post): array
+  private function run_save(array $post, bool $expect_save = true, $stored = false): array
   {
-    $this->stub_site();
+    $this->stub_site(['wpwc_display_conditions' => $stored]);
     Functions\expect('check_admin_referer')->once();
     Functions\when('current_user_can')->justReturn(true);
     Functions\when('wp_unslash')->returnArg();
@@ -116,7 +116,7 @@ class OptionsTest extends WPWC_TestCase
     });
 
     $result = ['saved' => null, 'transient' => null];
-    Functions\expect('update_option')->once()->andReturnUsing(function ($key, $value) use (&$result) {
+    Functions\expect('update_option')->times($expect_save ? 1 : 0)->andReturnUsing(function ($key, $value) use (&$result) {
       $result['saved'] = [$key, $value];
     });
     Functions\when('set_transient')->alias(function ($key, $value, $ttl) use (&$result) {
@@ -137,7 +137,7 @@ class OptionsTest extends WPWC_TestCase
 
   public function test_save_stores_v2_rules(): void
   {
-    $result = $this->run_save(['rules' => [
+    $result = $this->run_save(['wpwc_rules_ready' => '1', 'rules' => [
       ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => ''],
       ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_cases', 'item' => ''],
     ]]);
@@ -152,7 +152,7 @@ class OptionsTest extends WPWC_TestCase
   // Linhas inválidas não são salvas e o admin é avisado da quantidade na próxima tela.
   public function test_save_discarded_sets_transient(): void
   {
-    $result = $this->run_save(['rules' => [
+    $result = $this->run_save(['wpwc_rules_ready' => '1', 'rules' => [
       ['action' => 'show', 'where' => 'entire_site', 'which' => '', 'item' => ''],
       ['action' => 'show', 'where' => 'singular', 'which' => 'elementor_library', 'item' => ''],
     ]]);
@@ -164,9 +164,33 @@ class OptionsTest extends WPWC_TestCase
   // Salvar sem nenhuma regra grava a lista vazia: o widget fica oculto em todo o site.
   public function test_save_empty_list_stores_empty_rules(): void
   {
-    $result = $this->run_save([]);
+    $result = $this->run_save(['wpwc_rules_ready' => '1']);
 
     $this->assertSame(['wpwc_display_conditions', ['version' => 2, 'rules' => []]], $result['saved']);
+  }
+
+  // Se a lista de regras não carregou na tela (erro de JavaScript), salvar não pode apagar a configuração.
+  public function test_save_without_loaded_list_keeps_option(): void
+  {
+    $result = $this->run_save([], false);
+
+    $this->assertNull($result['saved']);
+    $this->assertSame(['wpwc_display_rules_not_loaded_3', 1, 60], $result['transient']);
+  }
+
+  // Uma regra salva com opção que deixou de existir continua até o admin removê-la.
+  public function test_save_keeps_saved_rule_with_unavailable_choice(): void
+  {
+    $stored = ['version' => 2, 'rules' => [
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_old', 'item' => 0],
+    ]];
+    $result = $this->run_save(['wpwc_rules_ready' => '1', 'rules' => [
+      ['action' => 'hide', 'where' => 'archive', 'which' => 'pta_old', 'item' => ''],
+      ['action' => 'show', 'where' => 'archive', 'which' => 'pta_other', 'item' => ''],
+    ]], true, $stored);
+
+    $this->assertSame([['action' => 'hide', 'where' => 'archive', 'which' => 'pta_old', 'item' => 0]], $result['saved'][1]['rules']);
+    $this->assertSame(1, $result['transient'][1]);
   }
 
   public function test_save_appearance_validates_corner(): void

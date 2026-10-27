@@ -278,8 +278,19 @@ class WP_WhatsApp_Multi_Chat_Options
       delete_transient($discard_key);
     }
 
+    $not_loaded = (bool) get_transient($this->not_loaded_transient_key());
+    if ($not_loaded) {
+      delete_transient($this->not_loaded_transient_key());
+    }
+
     $form_action = admin_url('admin-post.php');
     ?>
+    <?php if ($not_loaded) : ?>
+      <div class="notice notice-error is-dismissible">
+        <p><?php esc_html_e('A lista de regras não carregou e nada foi alterado. Recarregue a página e tente de novo.', 'wp-whatsapp-multi-chat'); ?></p>
+      </div>
+    <?php endif; ?>
+
     <?php if ($discarded > 0) : ?>
       <div class="notice notice-warning is-dismissible">
         <p><?php echo esc_html(sprintf(
@@ -306,7 +317,7 @@ class WP_WhatsApp_Multi_Chat_Options
         </button>
       </div>
 
-      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
+      <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat'), 'primary', 'submit', true, array('disabled' => 'disabled', 'id' => 'wpwc-rules-submit')); ?>
     </form>
     <?php
   }
@@ -351,6 +362,7 @@ class WP_WhatsApp_Multi_Chat_Options
         'unavailable' => __('Item indisponível (ID %d)', 'wp-whatsapp-multi-chat'),
         'unknown'     => __('Opção indisponível (%s)', 'wp-whatsapp-multi-chat'),
         'remove'      => __('Remover regra', 'wp-whatsapp-multi-chat'),
+        'pending'     => __('Escolha um item da lista ou apague o texto para valer para todos.', 'wp-whatsapp-multi-chat'),
       ),
     );
   }
@@ -358,6 +370,11 @@ class WP_WhatsApp_Multi_Chat_Options
   private function discarded_transient_key(): string
   {
     return 'wpwc_display_rules_discarded_' . get_current_user_id();
+  }
+
+  private function not_loaded_transient_key(): string
+  {
+    return 'wpwc_display_rules_not_loaded_' . get_current_user_id();
   }
 
   public function tab_appearance()
@@ -1050,13 +1067,30 @@ class WP_WhatsApp_Multi_Chat_Options
       wp_die(esc_html__('Você não tem permissões suficientes.', 'wp-whatsapp-multi-chat'));
     }
 
+    $redirect = admin_url(
+      'edit.php?post_type=' . WP_WhatsApp_Multi_Chat_Accounts::POST_TYPE_SLUG
+      . '&page=wp-whatsapp-multi-chat-options&tab=display_condition'
+    );
+
+    // The rules list is drawn by the screen script. Without its marker the
+    // list never loaded, and saving would wipe every rule (hiding the widget).
+    if (empty($_POST['wpwc_rules_ready'])) {
+      set_transient($this->not_loaded_transient_key(), 1, 60);
+      wp_safe_redirect($redirect);
+      exit;
+    }
+
     $raw = isset($_POST['rules']) && is_array($_POST['rules']) ? wp_unslash($_POST['rules']) : array();
 
-    $choices = $this->get_rule_choices($this->get_saved_rules());
-    $result  = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array_values($raw), array(
-      'archive'  => array_keys($choices['archive']),
-      'singular' => array_keys($choices['singular']),
-    ));
+    // Saved rules whose option no longer exists stay valid until the admin removes them.
+    $saved_rules = $this->get_saved_rules();
+    $choices     = $this->get_rule_choices($saved_rules);
+    $allowed     = array('archive' => array_keys($choices['archive']), 'singular' => array_keys($choices['singular']));
+    foreach ($saved_rules as $rule) {
+      if (isset($allowed[$rule['where']])) $allowed[$rule['where']][] = $rule['which'];
+    }
+
+    $result = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array_values($raw), $allowed);
 
     update_option(self::OPTION_KEY, WP_WhatsApp_Multi_Chat_Display_Rules::to_stored($result['rules']));
 

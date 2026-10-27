@@ -55,6 +55,17 @@
   color: #b32d2e;
 }
 
+.wpwc-rule-item-search.is-pending {
+  border-color: #dba617;
+}
+
+.wpwc-rule-error {
+  display: block;
+  margin-top: 4px;
+  color: #b32d2e;
+  font-size: 12px;
+}
+
 .wpwc-rule-remove {
   margin-left: auto;
   color: #d63638;
