@@ -234,6 +234,102 @@ class AccountsTest extends WPWC_TestCase
     $this->assertArrayHasKey('title', $result);
     $this->assertArrayHasKey('picture', $result);
     $this->assertArrayHasKey('number', $result);
+    $this->assertArrayHasKey('availability', $result);
     $this->assertArrayNotHasKey('date', $result);
+  }
+  /* ── Availability ───────────────────────────────────────────────── */
+
+  /**
+   * Runs save_account_meta() with a valid nonce and returns every meta write
+   * as [key => value].
+   */
+  private function save_with_post(array $post, array $existing_meta = []): array
+  {
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\expect('wp_verify_nonce')->andReturn(1);
+    Functions\stubs([
+      'sanitize_text_field'     => function ($v) { return $v; },
+      'sanitize_textarea_field' => function ($v) { return $v; },
+      'wp_unslash'              => function ($v) { return $v; },
+      'get_current_user_id'     => 7,
+      'sanitize_key'            => function ($v) { return strtolower(preg_replace('/[^a-z0-9_\-]/i', '', $v)); },
+    ]);
+    Functions\when('get_post_meta')->alias(function ($id, $key, $single) use ($existing_meta) {
+      return $existing_meta[$key] ?? '';
+    });
+
+    $writes = [];
+    Functions\when('update_post_meta')->alias(function ($id, $key, $value) use (&$writes) {
+      $writes[$key] = $value;
+    });
+
+    $_POST = array_merge(['wpwc_account_nonce' => 'valid'], $post);
+    WP_WhatsApp_Multi_Chat_Accounts::get_instance()->save_account_meta(42);
+    $_POST = [];
+
+    return $writes;
+  }
+
+  public function test_save_account_meta_saves_valid_mode(): void
+  {
+    $writes = $this->save_with_post(['wpwc_availability_mode' => 'general']);
+
+    $this->assertSame('general', $writes['_wpwc_availability_mode']);
+  }
+
+  public function test_save_account_meta_rejects_unknown_mode(): void
+  {
+    $writes = $this->save_with_post(['wpwc_availability_mode' => 'hacker']);
+
+    $this->assertSame('always_online', $writes['_wpwc_availability_mode']);
+  }
+
+  public function test_save_account_meta_saves_custom_hours_and_errors(): void
+  {
+    $previous = WP_WhatsApp_Multi_Chat_Hours::defaults();
+    $previous['mon'] = ['enabled' => 1, 'open' => '10:00', 'close' => '14:00'];
+
+    $stored = null;
+    Functions\expect('set_transient')->once()->andReturnUsing(function ($key, $value) use (&$stored) {
+      $stored = $value;
+    });
+
+    $writes = $this->save_with_post(
+      [
+        'wpwc_availability_mode' => 'custom',
+        'wpwc_account_hours'     => [
+          'mon' => ['enabled' => '1', 'open' => '18:00', 'close' => '08:00'],
+          'tue' => ['enabled' => '1', 'open' => '09:00', 'close' => '12:00'],
+        ],
+      ],
+      ['_wpwc_hours' => $previous]
+    );
+
+    $this->assertSame('custom', $writes['_wpwc_availability_mode']);
+    $this->assertSame($previous['mon'], $writes['_wpwc_hours']['mon']);
+    $this->assertSame(['enabled' => 1, 'open' => '09:00', 'close' => '12:00'], $writes['_wpwc_hours']['tue']);
+    $this->assertSame(['mon' => 'close_before_open'], $stored);
+  }
+
+  public function test_save_account_meta_without_availability_fields_leaves_meta_untouched(): void
+  {
+    Functions\expect('set_transient')->never();
+
+    $writes = $this->save_with_post(['wpwc_name' => 'Support']);
+
+    $this->assertSame('Support', $writes['_wpwc_name']);
+    $this->assertArrayNotHasKey('_wpwc_availability_mode', $writes);
+    $this->assertArrayNotHasKey('_wpwc_hours', $writes);
+  }
+
+  public function test_tabulation_data_availability_shows_mode_label(): void
+  {
+    Functions\when('get_post_meta')->justReturn('');
+
+    ob_start();
+    WP_WhatsApp_Multi_Chat_Accounts::get_instance()->account_tabulation_data('availability', 5);
+    $output = ob_get_clean();
+
+    $this->assertSame('Sempre online', $output);
   }
 }
