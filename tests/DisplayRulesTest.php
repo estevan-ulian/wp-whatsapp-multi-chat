@@ -143,4 +143,191 @@ class DisplayRulesTest extends WPWC_TestCase
   {
     $this->assertFalse($this->decide(array($this->rule('show', 'xyz')), $this->ctx(array('front_page' => true))));
   }
+
+  // ── Conversão do formato antigo ────────────────────────────────
+
+  private function legacy_manual(): array
+  {
+    return array(
+      'display_mode'    => 'manual',
+      'show_front_page' => 1,
+      'post_types'      => array('post'),
+      'archives'        => array('category', 'tag', 'author', 'date', 'search', '404', 'tax_steel'),
+      'include_posts'   => array(10),
+      'exclude_posts'   => array(5),
+    );
+  }
+
+  public function test_from_stored_everywhere(): void
+  {
+    $this->assertSame(
+      array($this->rule('show', 'entire_site')),
+      WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(array('display_mode' => 'everywhere'))
+    );
+  }
+
+  public function test_from_stored_manual_full(): void
+  {
+    Functions\when('get_post_type')->alias(function ($id) {
+      return 10 === $id ? 'page' : 'post';
+    });
+
+    $this->assertSame(
+      array(
+        $this->rule('show', 'front_page'),
+        $this->rule('show', 'singular', 'post'),
+        $this->rule('show', 'archive', 'tax_category'),
+        $this->rule('show', 'archive', 'tax_post_tag'),
+        $this->rule('show', 'archive', 'author'),
+        $this->rule('show', 'archive', 'date'),
+        $this->rule('show', 'search'),
+        $this->rule('show', '404'),
+        $this->rule('show', 'archive', 'tax_steel'),
+        $this->rule('show', 'singular', 'page', 10),
+        $this->rule('hide', 'singular', 'post', 5),
+      ),
+      WP_WhatsApp_Multi_Chat_Display_Rules::from_stored($this->legacy_manual())
+    );
+  }
+
+  public function test_from_stored_manual_empty_and_invalid(): void
+  {
+    $this->assertSame(array(), WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(array('display_mode' => 'manual')));
+    $this->assertSame(array(), WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(false));
+    $this->assertSame(array(), WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(''));
+  }
+
+  // Uma página específica que já foi apagada continua na lista, mas nunca corresponde.
+  public function test_from_stored_deleted_page(): void
+  {
+    Functions\when('get_post_type')->justReturn(false);
+
+    $this->assertSame(
+      array($this->rule('show', 'singular', 'page', 77)),
+      WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(array('display_mode' => 'manual', 'include_posts' => array(77)))
+    );
+  }
+
+  public function test_from_stored_v2_passthrough(): void
+  {
+    $stored = array('version' => 2, 'rules' => array(
+      array('action' => 'hide', 'where' => 'archive', 'which' => 'tax_category', 'item' => '5'),
+    ));
+
+    $this->assertSame(
+      array($this->rule('hide', 'archive', 'tax_category', 5)),
+      WP_WhatsApp_Multi_Chat_Display_Rules::from_stored($stored)
+    );
+  }
+
+  public function test_to_stored(): void
+  {
+    $rules = array($this->rule('show', 'entire_site'));
+    $this->assertSame(array('version' => 2, 'rules' => $rules), WP_WhatsApp_Multi_Chat_Display_Rules::to_stored($rules));
+  }
+
+  // A configuração convertida decide igual ao comportamento anterior do plugin.
+  public function test_converted_legacy_config_keeps_decisions(): void
+  {
+    Functions\when('get_post_type')->alias(function ($id) {
+      return 10 === $id ? 'page' : 'post';
+    });
+
+    $manual = WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(array(
+      'display_mode'    => 'manual',
+      'show_front_page' => 1,
+      'post_types'      => array('cases'),
+      'archives'        => array('category', 'search'),
+      'include_posts'   => array(10),
+      'exclude_posts'   => array(5),
+    ));
+
+    $this->assertTrue($this->decide($manual, $this->ctx(array('front_page' => true))));
+    $this->assertTrue($this->decide($manual, $this->ctx(array('singular' => 'cases', 'object' => 3))));
+    $this->assertFalse($this->decide($manual, $this->ctx(array('singular' => 'post', 'object' => 5))));
+    $this->assertTrue($this->decide($manual, $this->ctx(array('singular' => 'page', 'object' => 10))));
+    $this->assertFalse($this->decide($manual, $this->ctx(array('singular' => 'page', 'object' => 11))));
+    $this->assertTrue($this->decide($manual, $this->ctx(array('archive' => true, 'tax' => 'category', 'term' => 2))));
+    $this->assertFalse($this->decide($manual, $this->ctx(array('archive' => true, 'tax' => 'post_tag', 'term' => 2))));
+    $this->assertTrue($this->decide($manual, $this->ctx(array('search' => true))));
+
+    $everywhere = WP_WhatsApp_Multi_Chat_Display_Rules::from_stored(array('display_mode' => 'everywhere', 'exclude_posts' => array(5)));
+    $this->assertFalse($this->decide($everywhere, $this->ctx(array('singular' => 'post', 'object' => 5))));
+    $this->assertTrue($this->decide($everywhere, $this->ctx(array('not_found' => true))));
+  }
+
+  // ── Validação do formulário ────────────────────────────────────
+
+  private function choices(): array
+  {
+    return array(
+      'archive'  => array('all', 'blog', 'pta_cases', 'author', 'date', 'tax_category', 'tax_post_tag'),
+      'singular' => array('post', 'page', 'cases'),
+    );
+  }
+
+  private function raw(string $action, string $where, string $which = '', string $item = ''): array
+  {
+    return array('action' => $action, 'where' => $where, 'which' => $which, 'item' => $item);
+  }
+
+  public function test_sanitize_keeps_valid_rules(): void
+  {
+    $result = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array(
+      $this->raw('show', 'entire_site'),
+      $this->raw('hide', 'archive', 'pta_cases'),
+      $this->raw('hide', 'archive', 'tax_category', '5'),
+      $this->raw('show', 'singular', 'page', '12'),
+      $this->raw('show', 'singular', 'cases', '0'),
+      $this->raw('show', 'search'),
+      $this->raw('show', '404'),
+      $this->raw('show', 'front_page'),
+    ), $this->choices());
+
+    $this->assertSame(0, $result['discarded']);
+    $this->assertSame(array(
+      $this->rule('show', 'entire_site'),
+      $this->rule('hide', 'archive', 'pta_cases'),
+      $this->rule('hide', 'archive', 'tax_category', 5),
+      $this->rule('show', 'singular', 'page', 12),
+      $this->rule('show', 'singular', 'cases'),
+      $this->rule('show', 'search'),
+      $this->rule('show', '404'),
+      $this->rule('show', 'front_page'),
+    ), $result['rules']);
+  }
+
+  // Dados adulterados ou incompletos nunca são salvos; o admin é avisado da contagem.
+  public function test_sanitize_discards_invalid_rows(): void
+  {
+    $result = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array(
+      $this->raw('show', 'xyz'),
+      $this->raw('maybe', 'entire_site'),
+      $this->raw('show', 'archive'),
+      $this->raw('show', 'archive', 'pta_inexistente'),
+      $this->raw('show', 'singular', 'elementor_library'),
+      $this->raw('show', 'singular', 'page', '-5'),
+      $this->raw('show', 'singular', 'page', 'abc'),
+      'not-an-array',
+      $this->raw('show', 'entire_site'),
+    ), $this->choices());
+
+    $this->assertSame(8, $result['discarded']);
+    $this->assertSame(array($this->rule('show', 'entire_site')), $result['rules']);
+  }
+
+  // Item só faz sentido em Individuais e em taxonomias; nos demais ele é zerado.
+  public function test_sanitize_resets_item_where_not_applicable(): void
+  {
+    $result = WP_WhatsApp_Multi_Chat_Display_Rules::sanitize(array(
+      $this->raw('show', 'archive', 'pta_cases', '9'),
+      $this->raw('show', 'entire_site', 'page', '9'),
+    ), $this->choices());
+
+    $this->assertSame(0, $result['discarded']);
+    $this->assertSame(array(
+      $this->rule('show', 'archive', 'pta_cases'),
+      $this->rule('show', 'entire_site'),
+    ), $result['rules']);
+  }
 }

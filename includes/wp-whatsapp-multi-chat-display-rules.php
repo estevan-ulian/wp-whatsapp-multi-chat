@@ -32,6 +32,141 @@ final class WP_WhatsApp_Multi_Chat_Display_Rules
     );
   }
 
+  const VERSION = 2;
+  const WHERE   = array('entire_site', 'front_page', 'archive', 'singular', 'search', '404');
+
+  /**
+   * Reads the stored option. Settings saved before display rules existed are
+   * converted on read and only replaced when the admin saves the screen, so
+   * going back to an older plugin version loses nothing.
+   */
+  public static function from_stored($stored): array
+  {
+    if (!is_array($stored)) return array();
+
+    if (isset($stored['version']) && self::VERSION === (int) $stored['version']) {
+      $rules = array();
+      foreach ((array) ($stored['rules'] ?? array()) as $rule) {
+        if (!is_array($rule)) continue;
+        $rules[] = self::rule(
+          (string) ($rule['action'] ?? ''),
+          (string) ($rule['where'] ?? ''),
+          (string) ($rule['which'] ?? ''),
+          (int) ($rule['item'] ?? 0)
+        );
+      }
+      return $rules;
+    }
+
+    return self::from_legacy($stored);
+  }
+
+  public static function to_stored(array $rules): array
+  {
+    return array('version' => self::VERSION, 'rules' => $rules);
+  }
+
+  /**
+   * Validates rows posted by the settings form against the choices offered on
+   * screen. Rows that are incomplete or out of those choices are discarded and
+   * counted, so the admin can be told that something was not saved.
+   *
+   * @param array $choices ['archive' => which[], 'singular' => post type[]]
+   * @return array ['rules' => array, 'discarded' => int]
+   */
+  public static function sanitize(array $raw, array $choices): array
+  {
+    $rules     = array();
+    $discarded = 0;
+
+    foreach ($raw as $row) {
+      $rule = is_array($row) ? self::sanitize_row($row, $choices) : null;
+      if (null === $rule) {
+        $discarded++;
+        continue;
+      }
+      $rules[] = $rule;
+    }
+
+    return array('rules' => $rules, 'discarded' => $discarded);
+  }
+
+  private static function sanitize_row(array $row, array $choices): ?array
+  {
+    $action = (string) ($row['action'] ?? '');
+    $where  = (string) ($row['where'] ?? '');
+    $which  = (string) ($row['which'] ?? '');
+    $item   = trim((string) ($row['item'] ?? ''));
+
+    if (!in_array($action, array('show', 'hide'), true)) return null;
+    if (!in_array($where, self::WHERE, true)) return null;
+    if ('' !== $item && !ctype_digit($item)) return null;
+
+    if ('archive' === $where) {
+      if (!in_array($which, (array) ($choices['archive'] ?? array()), true)) return null;
+      return self::rule($action, $where, $which, 0 === strpos($which, 'tax_') ? (int) $item : 0);
+    }
+
+    if ('singular' === $where) {
+      if (!in_array($which, (array) ($choices['singular'] ?? array()), true)) return null;
+      return self::rule($action, $where, $which, (int) $item);
+    }
+
+    return self::rule($action, $where);
+  }
+
+  private static function from_legacy(array $old): array
+  {
+    if ('everywhere' === ($old['display_mode'] ?? '')) {
+      $rules = array(self::rule('show', 'entire_site'));
+    } else {
+      $rules = array();
+      if (!empty($old['show_front_page'])) {
+        $rules[] = self::rule('show', 'front_page');
+      }
+      foreach ((array) ($old['post_types'] ?? array()) as $type) {
+        $rules[] = self::rule('show', 'singular', (string) $type);
+      }
+      foreach ((array) ($old['archives'] ?? array()) as $key) {
+        $rules[] = self::legacy_archive_rule((string) $key);
+      }
+    }
+
+    // Specific pages applied in both modes before, so they convert in both.
+    foreach ((array) ($old['include_posts'] ?? array()) as $id) {
+      $rules[] = self::rule('show', 'singular', self::legacy_post_type((int) $id), (int) $id);
+    }
+    foreach ((array) ($old['exclude_posts'] ?? array()) as $id) {
+      $rules[] = self::rule('hide', 'singular', self::legacy_post_type((int) $id), (int) $id);
+    }
+
+    return $rules;
+  }
+
+  private static function legacy_archive_rule(string $key): array
+  {
+    switch ($key) {
+      case 'category': return self::rule('show', 'archive', 'tax_category');
+      case 'tag':      return self::rule('show', 'archive', 'tax_post_tag');
+      case 'search':   return self::rule('show', 'search');
+      case '404':      return self::rule('show', '404');
+    }
+    // 'author', 'date' and 'tax_{taxonomy}' keep their key as `which`.
+    return self::rule('show', 'archive', $key);
+  }
+
+  // A page deleted since it was chosen has no type left; "page" keeps the rule harmless.
+  private static function legacy_post_type(int $id): string
+  {
+    $type = get_post_type($id);
+    return $type ? (string) $type : 'page';
+  }
+
+  private static function rule(string $action, string $where, string $which = '', int $item = 0): array
+  {
+    return array('action' => $action, 'where' => $where, 'which' => $which, 'item' => $item);
+  }
+
   public static function matches(array $rules, array $context): bool
   {
     $show = false;
