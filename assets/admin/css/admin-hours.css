@@ -1,0 +1,43 @@
+/* -----------------------------------------------
+   WP WhatsApp Multi Chat – Business hours grid
+   Shared by the "Horários" settings tab and the account "Disponibilidade" box.
+----------------------------------------------- */
+.wpwc-hours-row {
+  display: grid;
+  grid-template-columns: 9rem 6rem auto 1rem auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.wpwc-hours-row:last-child {
+  border-bottom: none;
+}
+
+.wpwc-hours-day {
+  font-weight: 600;
+}
+
+.wpwc-hours-separator {
+  text-align: center;
+  color: #646970;
+}
+
+.wpwc-hours-row input[type="time"] {
+  min-width: 7rem;
+}
+
+@media (max-width: 600px) {
+  .wpwc-hours-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wpwc-hours-day {
+    grid-column: 1 / -1;
+  }
+
+  .wpwc-hours-separator {
+    display: none;
+  }
+}
