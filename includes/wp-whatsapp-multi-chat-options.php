@@ -573,6 +573,29 @@ class WP_WhatsApp_Multi_Chat_Options
             <p class="description"><?php esc_html_e('Deixe em branco para ocultar o rodapé.', 'wp-whatsapp-multi-chat'); ?></p>
           </div>
         </div>
+
+        <?php
+        // Shown only for accounts that follow business hours (see the "Horários" tab).
+        $status_fields = array(
+          'status_online'    => array(__('Status online', 'wp-whatsapp-multi-chat'), ''),
+          'status_offline'   => array(__('Status offline', 'wp-whatsapp-multi-chat'), __('Usado quando a conta não tem próxima abertura (ex.: "Sempre offline").', 'wp-whatsapp-multi-chat')),
+          'status_back'      => array(__('Status "volta em"', 'wp-whatsapp-multi-chat'), __('Use {dia} e {hora}. Ex.: "Volta seg às 08:00".', 'wp-whatsapp-multi-chat')),
+          'status_today'     => array(__('Palavra para "hoje"', 'wp-whatsapp-multi-chat'), ''),
+          'status_tomorrow'  => array(__('Palavra para "amanhã"', 'wp-whatsapp-multi-chat'), ''),
+          'offline_subtitle' => array(__('Subtítulo quando todos estão offline', 'wp-whatsapp-multi-chat'), __('Substitui o subtítulo do painel quando todas as contas estão fora do horário. Deixe em branco para manter o subtítulo normal.', 'wp-whatsapp-multi-chat')),
+        );
+        foreach ($status_fields as $field => $meta) :
+        ?>
+        <div class="wpwc-condition-row">
+          <div class="wpwc-condition-label"><?php echo esc_html($meta[0]); ?></div>
+          <div class="wpwc-condition-control">
+            <input type="text" name="<?php echo esc_attr($field); ?>" value="<?php echo esc_attr($o[$field]); ?>" class="regular-text">
+            <?php if ($meta[1]) : ?>
+              <p class="description"><?php echo esc_html($meta[1]); ?></p>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php endforeach; ?>
       </div>
 
       <?php submit_button(__('Salvar Configurações', 'wp-whatsapp-multi-chat')); ?>
@@ -621,6 +644,12 @@ class WP_WhatsApp_Multi_Chat_Options
       'cta_text'        => sanitize_text_field(wp_unslash(isset($_POST['cta_text'])      ? $_POST['cta_text']      : '')),
       'empty_text'      => sanitize_text_field(wp_unslash(isset($_POST['empty_text'])    ? $_POST['empty_text']    : '')),
       'footer_text'     => sanitize_text_field(wp_unslash(isset($_POST['footer_text'])   ? $_POST['footer_text']   : '')),
+      'status_online'   => sanitize_text_field(wp_unslash(isset($_POST['status_online'])   ? $_POST['status_online']   : '')),
+      'status_offline'  => sanitize_text_field(wp_unslash(isset($_POST['status_offline'])  ? $_POST['status_offline']  : '')),
+      'status_back'     => sanitize_text_field(wp_unslash(isset($_POST['status_back'])     ? $_POST['status_back']     : '')),
+      'status_today'    => sanitize_text_field(wp_unslash(isset($_POST['status_today'])    ? $_POST['status_today']    : '')),
+      'status_tomorrow' => sanitize_text_field(wp_unslash(isset($_POST['status_tomorrow']) ? $_POST['status_tomorrow'] : '')),
+      'offline_subtitle' => sanitize_text_field(wp_unslash(isset($_POST['offline_subtitle']) ? $_POST['offline_subtitle'] : '')),
     );
 
     update_option(self::APPEARANCE_OPTION_KEY, $options);
@@ -630,6 +659,8 @@ class WP_WhatsApp_Multi_Chat_Options
     $text_fields = array(
       'button_text', 'tooltip_text', 'panel_title', 'panel_subtitle',
       'cta_text', 'empty_text', 'footer_text',
+      'status_online', 'status_offline', 'status_back',
+      'status_today', 'status_tomorrow', 'offline_subtitle',
     );
     foreach ($text_fields as $field) {
       if (!empty($options[$field])) {
@@ -667,6 +698,13 @@ class WP_WhatsApp_Multi_Chat_Options
       'cta_text'        => __('Conversar', 'wp-whatsapp-multi-chat'),
       'empty_text'      => __('Nenhum contato disponível.', 'wp-whatsapp-multi-chat'),
       'footer_text'     => __('Criptografia de ponta a ponta', 'wp-whatsapp-multi-chat'),
+      'status_online'   => __('Online agora', 'wp-whatsapp-multi-chat'),
+      'status_offline'  => __('Offline', 'wp-whatsapp-multi-chat'),
+      /* translators: keep {dia} and {hora}; they become e.g. "seg" and "08:00" */
+      'status_back'     => __('Volta {dia} às {hora}', 'wp-whatsapp-multi-chat'),
+      'status_today'    => __('hoje', 'wp-whatsapp-multi-chat'),
+      'status_tomorrow' => __('amanhã', 'wp-whatsapp-multi-chat'),
+      'offline_subtitle' => __('Fora do horário de atendimento. Responderemos assim que voltarmos.', 'wp-whatsapp-multi-chat'),
       'aria_open'       => __('Abrir chat do WhatsApp', 'wp-whatsapp-multi-chat'),
       'aria_panel'      => __('Contatos do WhatsApp', 'wp-whatsapp-multi-chat'),
     );
@@ -924,6 +962,8 @@ class WP_WhatsApp_Multi_Chat_Options
         'panel_title', 'panel_subtitle',
         'cta_text', 'empty_text', 'footer_text',
         'aria_open', 'aria_panel',
+        'status_online', 'status_offline', 'status_back',
+        'status_today', 'status_tomorrow', 'offline_subtitle',
       );
 
       $keys_to_reset = array();

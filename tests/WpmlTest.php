@@ -434,4 +434,44 @@ class WpmlTest extends WPWC_TestCase
 
     $_POST = [];
   }
+  #[PHPUnit\Framework\Attributes\RunInSeparateProcess]
+  public function test_save_appearance_with_wpml_registers_status_texts(): void
+  {
+    define('ICL_LANGUAGE_CODE', 'fr');
+
+    Functions\expect('check_admin_referer')->once();
+    Functions\expect('current_user_can')->andReturn(true);
+    Functions\stubs([
+      'sanitize_key'        => function ($v) { return strtolower(trim($v)); },
+      'sanitize_text_field' => function ($v) { return $v; },
+      'sanitize_hex_color'  => function ($v) { return $v; },
+      'wp_unslash'          => function ($v) { return $v; },
+      'absint'              => function ($v) { return abs(intval($v)); },
+    ]);
+    Functions\expect('update_option')->once();
+    Functions\expect('wp_safe_redirect')->once()->andReturnUsing(function ($url) {
+      throw new WPWC_RedirectException($url);
+    });
+
+    $registered = [];
+    Actions\expectDone('wpml_register_single_string')->whenHappen(function ($context, $name, $value) use (&$registered) {
+      $registered[$name] = $value;
+    });
+
+    $_POST = [
+      'status_online'    => 'Online now',
+      'offline_subtitle' => 'We are closed',
+    ];
+
+    try {
+      WP_WhatsApp_Multi_Chat_Options::get_instance()->save_appearance();
+    } catch (WPWC_RedirectException $e) {
+      // expected
+    }
+
+    $this->assertSame('Online now', $registered['appearance_status_online'] ?? null);
+    $this->assertSame('We are closed', $registered['appearance_offline_subtitle'] ?? null);
+
+    $_POST = [];
+  }
 }
